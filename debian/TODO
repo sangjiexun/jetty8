@@ -1,0 +1,12 @@
+TODO List for jetty in debian
+
+* evaluate authbind
+
+Modules to add:
+
+jetty-terracota
+
+jetty-xbean
+ - spring-framework must be available as a deb package (build dependency)
+ - xbean must include the module xbean-spring
+

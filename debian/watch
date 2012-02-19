@@ -1,0 +1,3 @@
+version=3
+http://svn.codehaus.org/jetty/jetty/tags/ \
+  jetty-([0-6].*)/ debian debian/orig-tar.sh

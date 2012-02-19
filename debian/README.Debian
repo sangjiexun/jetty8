@@ -1,0 +1,43 @@
+jetty for Debian
+----------------
+
+This debian package installs Jetty 6 into /usr/share/jetty
+and other directories under /var and /etc, which are linked to
+from the /usr/share/jetty directory.
+
+The configuration of the server is in /etc/jetty. The configuration
+files listed in /etc/jetty/jetty.conf are passed to the command
+line of Jetty when it is started by /etc/init.d/jetty
+
+Webapps can be deployed by placing them in /var/lib/jetty/webapps
+(linked from /usr/share/jetty/webapps)
+Additional contexts can be configured and (hot) deployed via the 
+/etc/jetty/contexts directory (linked from /usr/share/jetty/contexts).
+
+Installing:
+
+$ sudo apt-get install libjetty-java
+$ sudo apt-get install libjetty-extra-java
+$ sudo apt-get install jetty
+
+Starting:
+
+Edit /etc/default/jetty
+Set:
+NO_START=0
+
+Then do:
+$ sudo service jetty start
+
+Stopping:
+
+$ sudo service jetty stop
+
+--
+
+This packaging is heavily based on the work done by Philipp Meier <meier@meisterbohne.de>
+and Michael Koch <konqueror@gmx.de>.
+
+-- 
+Greg Wilkins <gregw@mortbay.com> Thu Nov  8 18:10:06 EST 2007
+David Yu <david.yu.ftw@gmail.com> Thu May  21 15:06:30 EST 2009

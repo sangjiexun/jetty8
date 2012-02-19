@@ -1,0 +1,12 @@
+etc/*                   etc/jetty
+debian/jetty-shared-webapps.xml etc/jetty
+webapps/README.TXT      var/lib/jetty/webapps
+debian/root-webapp/*    var/lib/jetty/webapps/root
+examples/test-webapp/src/main/webapp/jetty_banner.gif var/lib/jetty/webapps/root
+contexts                etc/jetty
+resources               usr/share/jetty
+README.txt              usr/share/doc/jetty
+LICENSES/cla-*          usr/share/doc/jetty/LICENSES
+LICENSES/ccla-*         usr/share/doc/jetty/LICENSES
+NOTICE.txt              usr/share/doc/jetty/LICENSES
+debian/README.Debian    usr/share/doc/jetty

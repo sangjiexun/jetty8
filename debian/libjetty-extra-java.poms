@@ -1,0 +1,13 @@
+modules/html/pom.xml
+modules/management/pom.xml
+modules/naming/pom.xml
+extras/servlet-tester/pom.xml
+extras/ajp/pom.xml
+extras/threadpool/pom.xml
+extras/client/pom.xml
+contrib/jetty-rewrite-handler/pom.xml
+extras/setuid/pom.xml
+extras/setuid/modules/java/pom.xml
+modules/plus/pom.xml
+modules/annotations/pom.xml
+

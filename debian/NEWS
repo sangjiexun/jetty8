@@ -1,0 +1,10 @@
+jetty (6.1.21-1) unstable; urgency=medium
+
+    Stopped using /tmp/jetty-temp in /etc/init.d/jetty for security
+    reasons. From now all temporary data will be stored within
+    /var/cache/jetty as denoted below:
+    - JVM_TMP is now /var/cache/jetty/tmp
+    - JETTY_TMP is now /var/cache/jetty/data
+
+ -- Niels Thykier <niels@thykier.net>  Fri, 23 Oct 2009 20:33:24 +0200
+

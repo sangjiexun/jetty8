@@ -1,0 +1,20 @@
+From: Jakub Adam <jakub.adam@ktknet.cz>
+Date: Thu, 1 Mar 2012 21:32:54 +0100
+Subject: maven-bundle-plugin-version
+
+---
+ pom.xml |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+diff --git a/pom.xml b/pom.xml
+index 1e872a8..86d79e5 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -233,6 +233,7 @@
+         <plugin>
+           <groupId>org.apache.felix</groupId>
+           <artifactId>maven-bundle-plugin</artifactId>
++          <version>2.3.5</version>
+           <extensions>true</extensions>
+           <configuration>
+             <instructions>

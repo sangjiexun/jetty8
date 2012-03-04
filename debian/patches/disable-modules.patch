@@ -1,0 +1,38 @@
+From: Jakub Adam <jakub.adam@ktknet.cz>
+Date: Thu, 1 Mar 2012 21:33:06 +0100
+Subject: disable-modules
+
+---
+ pom.xml |   12 ++++++------
+ 1 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/pom.xml b/pom.xml
+index 86d79e5..9933028 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -378,19 +378,19 @@
+     <module>jetty-start</module>
+     <module>jetty-nested</module>
+     <module>jetty-overlay-deployer</module>
+-    <module>jetty-osgi</module>
++    <!--module>jetty-osgi</module>
+     <module>jetty-nosql</module>
+-    <module>jetty-http-spi</module>
++    <module>jetty-http-spi</module-->
+     <module>jetty-jsp</module>
+-    <module>jetty-distribution</module>
+-    <module>test-continuation</module>
++    <!--module>jetty-distribution</module>
++    <module>test-continuation</module-->
+     <!--module>test-continuation-jetty6</module-->
+-    <module>test-jetty-servlet</module>
++    <!--module>test-jetty-servlet</module>
+     <module>test-jetty-webapp</module>
+     <module>test-jetty-nested</module>
+     <module>example-jetty-embedded</module>
+     <module>example-async-rest</module>
+-    <module>tests</module>
++    <module>tests</module-->
+   </modules>
+   <dependencyManagement>
+     <dependencies>

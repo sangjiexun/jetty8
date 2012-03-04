@@ -1,0 +1,21 @@
+From: Jakub Adam <jakub.adam@ktknet.cz>
+Date: Thu, 1 Mar 2012 21:29:17 +0100
+Subject: disable-osgi-tests
+
+---
+ jetty-osgi/pom.xml |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/jetty-osgi/pom.xml b/jetty-osgi/pom.xml
+index 428cd22..ab23218 100644
+--- a/jetty-osgi/pom.xml
++++ b/jetty-osgi/pom.xml
+@@ -24,7 +24,7 @@
+     <module>jetty-osgi-boot-jsp</module>
+     <module>jetty-osgi-boot-warurl</module>
+     <module>jetty-osgi-httpservice</module>
+-    <module>test-jetty-osgi</module>
++    <!--module>test-jetty-osgi</module-->
+   </modules>
+   <build>
+     <resources>

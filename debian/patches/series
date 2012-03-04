@@ -1,0 +1,4 @@
+annotations-find-asm-commons.patch
+disable-osgi-tests.patch
+maven-bundle-plugin-version.patch
+disable-modules.patch

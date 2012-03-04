@@ -12,7 +12,6 @@ target/
 *.log
 *.swp
 *.diff
-*.patch
 
 # intellij
 *.iml

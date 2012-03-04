@@ -1,2 +1,1 @@
-usr/share/java/servlet-api-2.5.jar  usr/share/jetty/lib/servlet-api-2.5.jar
-
+usr/share/java/tomcat-servlet-api-3.0.jar usr/share/jetty/lib/servlet-api-3.0.jar

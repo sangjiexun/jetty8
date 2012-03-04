@@ -1,68 +1,51 @@
 #!/usr/bin/make -f
 
 include /usr/share/cdbs/1/rules/debhelper.mk
-include /usr/share/cdbs/1/class/ant.mk
+include /usr/share/cdbs/1/class/javahelper.mk
+include /usr/share/cdbs/1/class/maven.mk
 
-PACKAGE              := $(DEB_SOURCE_PACKAGE)
-VERSION              := $(DEB_UPSTREAM_VERSION)
-JAVA_HOME            := /usr/lib/jvm/default-java
-DEB_JARS             := servlet-api-2.5 slf4j-api slf4j-simple mx4j mx4j-tools gnumail activation commons-daemon junit ant-junit geronimo-jta-1.0.1b-spec annotations-api
-DEB_ANT_BUILD_TARGET := package
-DEB_ANT_BUILDFILE    := debian/build.xml
-DEB_ANT_ARGS         := -DVERSION=$(VERSION) -Dbuild.sysclasspath=last
-DEB_INSTALL_CHANGELOGS_ALL := VERSION.txt
-#API_DOCS             := javadoc/
+JAVA_HOME := /usr/lib/jvm/default-java
+
+DEB_MAVEN_INSTALL_TARGET :=
+DEB_MAVEN_DOC_TARGET :=
+DEB_MAVEN_ARGS := -P-aggregates -P-osgi
+
+LIBJETTY_JARS := continuation deploy http io jmx overlay-deployer policy rewrite security \
+  server servlet servlets start util webapp xml
+
+LIBJETTY_EXTRA_JARS := ajp annotations client jndi monitor plus
 
 # Some java sources contain UTF-8 characters, build fails with C locale
 export LC_ALL=C.UTF-8
 
-binary-post-install/lib$(PACKAGE)-java::
-	mh_installpoms -plib$(PACKAGE)-java
-	mh_installjar -plib$(PACKAGE)-java -l --usj-name=jetty-util modules/util/pom.xml lib/jetty-util-$(VERSION).jar /usr/share/jetty/lib/jetty-util.jar
-	mh_installjar -plib$(PACKAGE)-java -l --usj-name=jetty-util5 modules/util5/pom.xml lib/util5/jetty-util5-$(VERSION).jar /usr/share/jetty/jre1.5/jetty-util5-$(VERSION).jar  usr/share/jetty/lib/jre1.5/jetty-util5.jar
-	mh_installjar -plib$(PACKAGE)-java -l --usj-name=jetty modules/jetty/pom.xml lib/jetty-$(VERSION).jar /usr/share/jetty/lib/jetty.jar
-	mh_installjar -plib$(PACKAGE)-java -l --usj-name=jetty-sslengine extras/sslengine/pom.xml lib/sslengine/jetty-sslengine-$(VERSION).jar /usr/share/jetty/lib/ext/jetty-sslengine.jar
-	mh_installjar -plib$(PACKAGE)-java -l --usj-name=jetty-start modules/start/pom.xml start.jar /usr/share/jetty/start.jar
-	mh_installjar -plib$(PACKAGE)-java -l --usj-name=jetty-start-daemon contrib/start-daemon/pom.xml start-daemon.jar /usr/share/jetty/start-daemon.jar
+install/libjetty-java:: libjetty-java-mh-install
+	version=$(wildcard debian/libjetty-java/usr/share/maven-repo/org/eclipse/jetty/jetty-server/8*); \
+	version=$$(basename $$version); \
+	for lib in $(LIBJETTY_JARS); do \
+		mh_installjar -plibjetty-java --java-lib --usj-name=jetty-$$lib \
+		    jetty-$$lib/pom.xml jetty-$$lib/target/jetty-$$lib-*.jar; \
+		if [ $$lib = "start" ]; then \
+		    continue; \
+		fi; \
+		jar=jetty-$$lib-$$version.jar; \
+		dh_link -plibjetty-java usr/share/java/$$jar usr/share/jetty/lib/$$jar; \
+	done; \
+	dh_link -plibjetty-java usr/share/java/jetty-start-$$version.jar usr/share/jetty/start.jar
 
-binary-post-install/lib$(PACKAGE)-extra-java::
-	mh_installpoms -plib$(PACKAGE)-extra-java
-	mh_installjar -plib$(PACKAGE)-extra-java -l --usj-name=jetty-html modules/html/pom.xml lib/ext/jetty-html-$(VERSION).jar /usr/share/jetty/lib/ext/jetty-html.jar
-	mh_installjar -plib$(PACKAGE)-extra-java -l --usj-name=jetty-management modules/management/pom.xml lib/management/jetty-management-$(VERSION).jar /usr/share/jetty/lib/management/jetty-management.jar
-	mh_installjar -plib$(PACKAGE)-extra-java -l --usj-name=jetty-naming modules/naming/pom.xml lib/naming/jetty-naming-$(VERSION).jar /usr/share/jetty/lib/naming/jetty-naming.jar
-	mh_installjar -plib$(PACKAGE)-extra-java -l --usj-name=jetty-plus modules/plus/pom.xml lib/plus/jetty-plus-$(VERSION).jar /usr/share/jetty/lib/plus/jetty-plus.jar
-	mh_installjar -plib$(PACKAGE)-extra-java -l --usj-name=jetty-servlet-tester extras/servlet-tester/pom.xml lib/ext/jetty-servlet-tester-$(VERSION).jar /usr/share/jetty/lib/ext/jetty-servlet-tester.jar
-	mh_installjar -plib$(PACKAGE)-extra-java -l --usj-name=jetty-ajp extras/ajp/pom.xml lib/ext/jetty-ajp-$(VERSION).jar /usr/share/jetty/lib/ext/jetty-ajp.jar
-	mh_installjar -plib$(PACKAGE)-extra-java -l --usj-name=jetty-java5-threadpool extras/threadpool/pom.xml lib/ext/jetty-java5-threadpool-$(VERSION).jar /usr/share/jetty/lib/ext/jetty-java5-threadpool.jar
-	mh_installjar -plib$(PACKAGE)-extra-java -l --usj-name=jetty-client extras/client/pom.xml lib/ext/jetty-client-$(VERSION).jar /usr/share/jetty/lib/ext/jetty-client.jar
-	mh_installjar -plib$(PACKAGE)-extra-java -l --usj-name=jetty-rewrite-handler contrib/jetty-rewrite-handler/pom.xml lib/ext/jetty-rewrite-handler-$(VERSION).jar /usr/share/jetty/lib/ext/jetty-rewrite-handler.jar
-	mh_installjar -plib$(PACKAGE)-extra-java -l --usj-name=jetty-setuid extras/setuid/modules/java/pom.xml lib/ext/jetty-setuid-$(VERSION).jar /usr/share/jetty/lib/ext/jetty-setuid.jar
-	mh_installjar -plib$(PACKAGE)-extra-java -l --usj-name=jetty-annotations modules/annotations/pom.xml lib/ext/jetty-annotations-$(VERSION).jar /usr/share/jetty/lib/ext/jetty-annotations.jar
+install/libjetty-extra-java:: libjetty-extra-java-mh-install
+	version=$(wildcard debian/libjetty-extra-java/usr/share/maven-repo/org/eclipse/jetty/jetty-ajp/8*); \
+	version=$$(basename $$version); \
+	for lib in $(LIBJETTY_EXTRA_JARS); do \
+		mh_installjar -plibjetty-extra-java --java-lib --usj-name=jetty-$$lib \
+		    jetty-$$lib/pom.xml jetty-$$lib/target/jetty-$$lib-*.jar; \
+		if [ $$lib = "monitor" ]; then \
+		    continue; \
+		fi; \
+		jar=jetty-$$lib-$$version.jar; \
+		dh_link -plibjetty-extra-java usr/share/java/$$jar usr/share/jetty/lib/$$jar; \
+	done; \
+	dh_link -plibjetty-extra-java usr/share/java/jetty-monitor-$$version.jar usr/share/jetty/lib/monitor/jetty-monitor.jar
 
-extras/setuid/modules/native/target/generated/org_mortbay_setuid_SetUID.c:
-	cd extras/setuid && install -D modules/native/src/main/native/org_mortbay_setuid_SetUID.c modules/native/target/generated/org_mortbay_setuid_SetUID.c
-
-extras/setuid/modules/native/target/generated/org_mortbay_setuid_SetUID.h: extras/setuid/modules/native/target/generated/org_mortbay_setuid_SetUID.c
-	cd extras/setuid && javah -d modules/native/target/generated -classpath ../../lib/ext/jetty-setuid-$(VERSION).jar org.mortbay.setuid.SetUID
-
-lib/ext/libsetuid.so: extras/setuid/modules/native/target/generated/org_mortbay_setuid_SetUID.h
-	cd extras/setuid && gcc -I$(JAVA_HOME)/include/ -I$(JAVA_HOME)/include/linux/  \
-		-shared modules/native/target/generated/org_mortbay_setuid_SetUID.c -fPIC -O \
-		-o ../../lib/ext/libsetuid.so
-
-build/lib$(PACKAGE)-extra:: lib/ext/libsetuid.so
-
-binary-post-install/lib$(PACKAGE)-extra::
-	mh_installpoms -plib$(PACKAGE)-extra
-	dh_install -plib$(PACKAGE)-extra --sourcedir=lib/ext libsetuid.so /usr/lib/jetty
-	dh_link -plib$(PACKAGE)-extra /usr/lib/jetty/libsetuid.so /usr/share/jetty/lib/ext/libsetuid.so
-
-clean::
-	$(RM) -r debian/.mh
-
-get-orig-source:
-	uscan --download-version $(DEB_UPSTREAM_VERSION) --force-download --rename
-
-# No documentation released yet.
-#binary-post-install/$(PACKAGE)-doc::
+%-mh-install:
+	mh_install -p$(patsubst %-mh-install,%,$@)
 

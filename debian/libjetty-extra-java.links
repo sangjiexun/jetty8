@@ -1,18 +1,12 @@
-usr/share/java/mx4j.jar            usr/share/jetty/lib/management/mx4j/mx4j.jar
-usr/share/java/mx4j-tools.jar      usr/share/jetty/lib/management/mx4j/mx4j-tools.jar
-usr/share/java/activation.jar      usr/share/jetty/lib/naming/activation.jar
-usr/share/java/gnumail.jar         usr/share/jetty/lib/naming/mail.jar
-usr/share/java/ant.jar             usr/share/jetty/lib/jsp-2.1/ant.jar
-usr/share/java/ant-launcher.jar    usr/share/jetty/lib/jsp-2.1/ant-launcher.jar
-usr/share/java/jasper.jar          usr/share/jetty/lib/jsp-2.1/jasper.jar
-usr/share/java/jsp-api-2.1.jar     usr/share/jetty/lib/jsp-2.1/jsp-api.jar
-usr/share/java/el-api-2.1.jar      usr/share/jetty/lib/jsp-2.1/el-api.jar
-usr/share/java/jasper-el.jar       usr/share/jetty/lib/jsp-2.1/commons-el.jar
-usr/share/java/tomcat-juli.jar     usr/share/jetty/lib/jsp-2.1/tomcat-juli.jar
-usr/share/java/jcl-over-slf4j.jar  usr/share/jetty/lib/jsp-2.1/jcl-over-slf4j.jar
-usr/share/java/slf4j-api.jar       usr/share/jetty/lib/jsp-2.1/slf4j-api.jar
-usr/share/java/slf4j-simple.jar    usr/share/jetty/lib/jsp-2.1/slf4j-simple.jar
-usr/share/java/xercesImpl.jar      usr/share/jetty/lib/jsp-2.1/xercesImpl.jar
-usr/share/java/xmlParserAPIs.jar   usr/share/jetty/lib/jsp-2.1/xmlParserAPIs.jar
-usr/share/java/annotations-api.jar           usr/share/jetty/lib/annotations-api.jar
-usr/share/java/geronimo-jta-1.0.1b-spec.jar  usr/share/jetty/lib/geronimo-jta-1.0.1b-spec.jar
+usr/share/java/tomcat-annotations-api.jar    usr/share/jetty/lib/annotations/javax.annotation.jar
+usr/share/java/asm3.jar                      usr/share/jetty/lib/annotations/org.objectweb.asm.jar
+usr/share/java/asm3-commons.jar              usr/share/jetty/lib/annotations/org.objectweb.asm.commons.jar
+
+usr/share/java/activation.jar                usr/share/jetty/lib/jndi/javax.activation.jar
+usr/share/java/gnumail.jar                   usr/share/jetty/lib/jndi/javax.mail.jar
+
+usr/share/java/tomcat-jsp-api-2.2.jar        usr/share/jetty/lib/jsp/javax.servlet.jsp.jar
+usr/share/java/tomcat-jasper.jar             usr/share/jetty/lib/jsp/org.apache.jasper.jar
+usr/share/java/jstl1.1.jar                   usr/share/jetty/lib/jsp/javax.servlet.jsp.jstl.jar
+usr/share/java/tomcat-el-api-2.2.jar         usr/share/jetty/lib/jsp/javax.el.jar
+usr/share/java/standard.jar                  usr/share/jetty/lib/jsp/org.apache.taglibs.standard.jar

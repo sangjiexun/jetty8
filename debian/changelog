@@ -1,3 +1,9 @@
+jetty (8.1.1-1) UNRELEASED; urgency=low
+
+  * New upstream release.
+
+ -- Jakub Adam <jakub.adam@ktknet.cz>  Thu, 01 Mar 2012 21:05:15 +0100
+
 jetty (6.1.24-6) unstable; urgency=medium
 
   * Removed Depends on JREs for library packages, no longer required

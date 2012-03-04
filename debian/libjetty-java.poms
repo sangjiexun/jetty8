@@ -1,8 +1,40 @@
 pom.xml --no-parent
-modules/util/pom.xml
-modules/util5/pom.xml
-modules/jetty/pom.xml
-extras/sslengine/pom.xml
-modules/start/pom.xml
-contrib/start-daemon/pom.xml
+jetty-webapp/pom.xml --java-lib --usj-name=jetty-webapp
+jetty-policy/pom.xml --java-lib --usj-name=jetty-policy
+jetty-jsp/pom.xml
+jetty-security/pom.xml --java-lib --usj-name=jetty-security
+jetty-server/pom.xml --java-lib --usj-name=jetty-server
+jetty-jndi/pom.xml --ignore-pom
+jetty-xml/pom.xml --java-lib --usj-name=jetty-xml
+jetty-aggregate/jetty-webapp/pom.xml
+jetty-aggregate/jetty-server/pom.xml
+jetty-aggregate/jetty-all/pom.xml
+jetty-aggregate/jetty-all-server/pom.xml
+jetty-aggregate/jetty-client/pom.xml
+jetty-aggregate/jetty-plus/pom.xml --ignore-pom
+jetty-aggregate/pom.xml
+jetty-aggregate/jetty-websocket/pom.xml --java-lib --usj-name=jetty-websocket
+jetty-aggregate/jetty-servlet/pom.xml --java-lib --usj-name=jetty-servlet
+jetty-ajp/pom.xml --ignore-pom
+jetty-continuation/pom.xml --java-lib --usj-name=jetty-continuation
+jetty-annotations/pom.xml --ignore-pom
+jetty-nosql/pom.xml --ignore-pom
+jetty-monitor/pom.xml --ignore-pom
+jetty-client/pom.xml --ignore-pom
+jetty-overlay-deployer/pom.xml --java-lib --usj-name=jetty-overlay-deployer
+jetty-rewrite/pom.xml --java-lib --usj-name=jetty-rewrite
+jetty-plus/pom.xml --ignore-pom
+jetty-deploy/pom.xml --java-lib --usj-name=jetty-deploy
+jetty-distribution/pom.xml
+jetty-http/pom.xml --java-lib --usj-name=jetty-http
+jetty-nested/pom.xml
+jetty-websocket/pom.xml
+jetty-start/pom.xml --java-lib --usj-name=jetty-start
+jetty-http-spi/pom.xml
+jetty-io/pom.xml --java-lib --usj-name=jetty-io
+jetty-util/pom.xml --java-lib --usj-name=jetty-util
+jetty-jaspi/pom.xml
+jetty-jmx/pom.xml --java-lib --usj-name=jetty-jmx
+jetty-servlets/pom.xml --java-lib --usj-name=jetty-servlets
+jetty-servlet/pom.xml --java-lib --usj-name=jetty-servlet
 

@@ -11,7 +11,7 @@
 <!-- =============================================================== -->
 
 
-<Configure id="Server" class="org.mortbay.jetty.Server">
+<Configure id="Server" class="org.eclipse.jetty.server.Server">
 
     <!-- =========================================================== -->
     <!-- Configure the webapp deployer.                              -->
@@ -28,7 +28,7 @@
     <!-- =========================================================== -->
     <Call name="addLifeCycle">
       <Arg>
-        <New class="org.mortbay.jetty.deployer.WebAppDeployer">
+        <New class="org.eclipse.jetty.deploy.WebAppDeployer">
           <Set name="contexts"><Ref id="Contexts"/></Set>
           <Set name="webAppDir">/usr/share/jetty/webapps</Set>
           <Set name="parentLoaderPriority">false</Set>

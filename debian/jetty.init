@@ -67,7 +67,6 @@ DESC="Jetty servlet engine"
 JETTY_HOME=/usr/share/$NAME
 LOGDIR="/var/log/jetty"
 START_JAR="$JETTY_HOME/start.jar"
-START_DAEMON_JAR="$JETTY_HOME/start-daemon.jar"
 DEFAULT=/etc/default/$NAME
 DAEMON=/usr/bin/jsvc
 JVM_TMP=/var/cache/jetty/tmp
@@ -194,10 +193,12 @@ export JAVA_OPTIONS
 # Define other required variables
 PIDFILE="/var/run/$NAME.pid"
 WEBAPPDIR="$JETTY_HOME/webapps"
-BOOTSTRAP_CLASS=org.mortbay.jetty.start.daemon.Bootstrap
-JSVC_CLASSPATH="/usr/share/java/commons-daemon.jar:$START_JAR:$START_DAEMON_JAR:$JAVA_HOME/lib/tools.jar"
+BOOTSTRAP_CLASS=org.eclipse.jetty.start.Main
+START_CLASSPATH="/usr/share/java/commons-daemon.jar:$START_JAR:$JAVA_HOME/lib/tools.jar"
 ROTATELOGS=/usr/sbin/rotatelogs
 HOSTNAME=$(uname -n)
+
+JAVA_OPTIONS="$JAVA_OPTIONS -cp $START_CLASSPATH"
 
 ##################################################
 # Check for JAVA_HOME
@@ -292,10 +293,9 @@ case "$1" in
 		chown $JETTY_USER "$JVM_TMP"
 		cd "$JVM_TMP"
 
-		$DAEMON -user "$JETTY_USER" -cp "$JSVC_CLASSPATH" \
-		    -outfile $LOGDIR/out.log -errfile $LOGDIR/out.log \
-		    -pidfile "$PIDFILE" $JAVA_OPTIONS $BOOTSTRAP_CLASS \
-		    $JETTY_ARGS $CONFIGS
+		start-stop-daemon --start --pidfile "$PIDFILE" --chuid "$JETTY_USER" \
+		    --chdir "$JETTY_HOME" --background --make-pidfile --startas $JAVA -- \
+		    $JAVA_OPTIONS $BOOTSTRAP_CLASS $JETTY_ARGS --daemon $CONFIGS
 
 		log_daemon_msg "$DESC started, reachable on http://$HOSTNAME:$JETTY_PORT/." "$NAME"
 

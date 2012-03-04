@@ -1,4 +1,18 @@
-junit junit jar s/3\..*/3.x/
-s/ant/org.apache.ant/ * * s/.*/debian/
-org.mortbay.jetty * * s/6\..*/6.x/
-s/org.mortbay.jetty/javax.servlet/ servlet-api jar s/.*/2.5/
+asm asm-commons * 3.x * *
+javax.servlet jstl jar s/.*/1.1/ * *
+s/javax.servlet.jsp/org.apache.tomcat/ s/jsp-api/tomcat-jsp-api/ jar s/.*/debian/ * *
+junit junit * s/4\..*/4.x/ * *
+org.apache.felix maven-bundle-plugin * s/.*/2.3.5/ * *
+s/org.eclipse.jetty.orbit/asm/ s/org.objectweb.asm/asm/ jar s/.*/3.x/ * *
+s/org.eclipse.jetty.orbit/javax.mail/ s/javax.mail.glassfish/gnumail/ jar s/.*/debian/ * *
+s/org.eclipse.jetty.orbit/javax.security.auth.message/ s/javax.security.auth.message/jmac-api/ jar s/.*/debian/ * *
+s/org.eclipse.jetty.orbit/org.apache.geronimo.specs/ s/javax.transaction/geronimo-jta_1.1_spec/ jar s/.*/debian/ * *
+s/org.eclipse.jetty.orbit/javax.activation/ s/javax.activation/gnujaf/ jar s/.*/debian/ * *
+s/org.eclipse.jetty.orbit/org.apache.tomcat/ s/javax.annotation/tomcat-annotations-api/ jar s/.*/debian/ * *
+s/org.eclipse.jetty.orbit/org.apache.tomcat/ s/javax.el/tomcat-el-api/ jar s/.*/debian/ * *
+s/org.eclipse.jetty.orbit/org.apache.tomcat/ s/javax.servlet/tomcat-servlet-api/ jar s/.*/debian/ * *
+s/org.eclipse.jetty.orbit/org.apache.tomcat/ s/javax.servlet.jsp/tomcat-jsp-api/ jar s/.*/debian/ * *
+s/org.eclipse.jetty.orbit/javax.servlet/ s/javax.servlet.jsp.jstl/jstl/ jar s/.*/1.1/ * *
+s/org.eclipse.jetty.orbit/org.apache.tomcat/ s/org.apache.jasper.glassfish/tomcat-jasper/ jar s/.*/debian/ * *
+s/org.mortbay.jetty/org.apache.tomcat/ s/servlet-api/tomcat-servlet-api/ jar  s/.*/debian/ * *
+org.mortbay.jetty jetty-util * s/6\..*/6.x/ * *

@@ -13,6 +13,9 @@ DEB_ANT_ARGS         := -DVERSION=$(VERSION) -Dbuild.sysclasspath=last
 DEB_INSTALL_CHANGELOGS_ALL := VERSION.txt
 #API_DOCS             := javadoc/
 
+# Some java sources contain UTF-8 characters, build fails with C locale
+export LC_ALL=C.UTF-8
+
 binary-post-install/lib$(PACKAGE)-java::
 	mh_installpoms -plib$(PACKAGE)-java
 	mh_installjar -plib$(PACKAGE)-java -l --usj-name=jetty-util modules/util/pom.xml lib/jetty-util-$(VERSION).jar /usr/share/jetty/lib/jetty-util.jar

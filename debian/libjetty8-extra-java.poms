@@ -1,0 +1,6 @@
+jetty-ajp/pom.xml --java-lib --usj-name=jetty8-ajp
+jetty-annotations/pom.xml --java-lib --usj-name=jetty8-annotations
+jetty-client/pom.xml --java-lib --usj-name=jetty8-client
+jetty-jndi/pom.xml --java-lib --usj-name=jetty8-jndi
+jetty-monitor/pom.xml --java-lib --usj-name=jetty8-monitor
+jetty-plus/pom.xml --java-lib --usj-name=jetty8-plus

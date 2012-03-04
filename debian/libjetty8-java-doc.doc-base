@@ -5,5 +5,5 @@ Abstract: This is the API Javadoc provided by Jetty.
 Section: Programming
 
 Format: HTML
-Index: /usr/share/doc/libjetty-java/api/index.html
-Files: /usr/share/doc/libjetty-java/api/*
+Index: /usr/share/doc/libjetty8-java/api/index.html
+Files: /usr/share/doc/libjetty8-java/api/*

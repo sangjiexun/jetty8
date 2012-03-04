@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# /etc/init.d/jetty -- startup script for jetty 6.1.18
+# /etc/init.d/jetty8 -- startup script for jetty 8.1.1
 #
 # Written by Philipp Meier <meier@meisterbohne.de>
 # Modified for Jetty 6 by Ludovic Claude <ludovic.claude@laposte.net>
@@ -19,11 +19,11 @@
 
 # Configuration files
 #
-# /etc/default/jetty
+# /etc/default/jetty8
 #   If it exists, this is read at the start of script. It may perform any 
 #   sequence of shell commands, like setting relevant environment variables.
 #
-# /etc/jetty/jetty.conf
+# /etc/jetty8/jetty.conf
 #   If found, the file will be used as this script's configuration. 
 #   Each line in the file may contain:
 #     - A comment denoted by the pound (#) sign as first non-blank character.
@@ -34,11 +34,11 @@
 #
 #   The files will be checked for existence before being passed to jetty.
 #
-# /etc/jetty/jetty.xml
+# /etc/jetty8/jetty.xml
 #   If found, used as this script's configuration file, but only if
-#   /etc/jetty/jetty.conf was not present. See above.
+#   /etc/jetty8/jetty.conf was not present. See above.
 #   
-# Configuration variables (to define in /etc/default/jetty)
+# Configuration variables (to define in /etc/default/jetty8)
 #
 # JAVA_HOME  
 #   Home of Java installation. 
@@ -62,14 +62,14 @@
 #   if set, then used as a username to run the server as
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-NAME=jetty
+NAME=jetty8
 DESC="Jetty servlet engine"
 JETTY_HOME=/usr/share/$NAME
-LOGDIR="/var/log/jetty"
+LOGDIR="/var/log/$NAME"
 START_JAR="$JETTY_HOME/start.jar"
 DEFAULT=/etc/default/$NAME
 DAEMON=/usr/bin/jsvc
-JVM_TMP=/var/cache/jetty/tmp
+JVM_TMP=/var/cache/$NAME/tmp
 
 if [ `id -u` -ne 0 ]; then
 	echo "You need root privileges to run this script"
@@ -135,10 +135,10 @@ JDK_DIRS="
 JETTY_SHUTDOWN=30
 
 # Jetty uses a directory to store temporary files like unpacked webapps
-JETTY_TMP=/var/cache/jetty/data
+JETTY_TMP=/var/cache/jetty8/data
 
 # Jetty uses a config file to setup its boot classpath
-JETTY_START_CONFIG=/etc/jetty/start.config
+JETTY_START_CONFIG=/etc/jetty8/start.config
 
 # End of variables that can be overwritten in /etc/default/jetty
                                                                                 
@@ -158,13 +158,13 @@ fi
 
 # Check whether startup has been disabled
 if [ "$NO_START" != "0" -a "$1" != "stop" ]; then 
-	[ "$VERBOSE" != "no" ] && log_failure_msg "Not starting jetty - edit /etc/default/jetty and change NO_START to be 0 (or comment it out)."
+	[ "$VERBOSE" != "no" ] && log_failure_msg "Not starting jetty - edit /etc/default/jetty8 and change NO_START to be 0 (or comment it out)."
 	exit 0
 fi
 
 if [ -z "$JETTY_USER" ]; then
 	log_failure_msg "Not starting/stopping $DESC as configured"
-	log_failure_msg "(JETTY_USER is empty in /etc/default/jetty)."
+	log_failure_msg "(JETTY_USER is empty in /etc/default/jetty8)."
 	exit 0
 fi
 
@@ -206,11 +206,11 @@ JAVA_OPTIONS="$JAVA_OPTIONS -cp $START_CLASSPATH"
 if [ -z "$JAVA_HOME" ]; then
 	log_failure_msg "Could not start $DESC because no Java Development Kit"
 	log_failure_msg "(JDK) was found. Please download and install JDK 1.4 or higher and set"
-	log_failure_msg "JAVA_HOME in /etc/default/jetty to the JDK's installation directory."
+	log_failure_msg "JAVA_HOME in /etc/default/jetty8 to the JDK's installation directory."
 	exit 0
 fi
 
-CONFIG_LINES=$(cat /etc/jetty/jetty.conf | grep -v "^[[:space:]]*#" | tr "\n" " ")
+CONFIG_LINES=$(cat /etc/jetty8/jetty.conf | grep -v "^[[:space:]]*#" | tr "\n" " ")
 
 ##################################################
 # Get the list of config.xml files from jetty.conf
@@ -252,7 +252,7 @@ fi
 #####################################################
 if [ -z "$CONFIGS" ]
 then
-	CONFIGS="/etc/jetty/jetty-logging.xml /etc/jetty/jetty.xml"
+	CONFIGS="/etc/jetty8/jetty-logging.xml /etc/jetty8/jetty.xml"
 fi
 
 ##################################################

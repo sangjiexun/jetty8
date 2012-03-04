@@ -1,0 +1,25 @@
+jetty-webapp/src/main/config/etc/*           etc/jetty8
+jetty-policy/src/main/config/etc/*           etc/jetty8
+jetty-security/src/main/config/etc/*         etc/jetty8
+jetty-server/src/main/config/etc/*           etc/jetty8
+jetty-ajp/src/main/config/etc/*              etc/jetty8
+jetty-annotations/src/main/config/etc/*      etc/jetty8
+jetty-monitor/src/main/config/etc/*          etc/jetty8
+jetty-overlay-deployer/src/main/config/etc/* etc/jetty8
+jetty-rewrite/src/main/config/etc/*          etc/jetty8
+jetty-plus/src/main/config/etc/*             etc/jetty8
+jetty-util/src/main/config/etc/*             etc/jetty8
+jetty-jmx/src/main/config/etc/*              etc/jetty8
+debian/jetty-shared-webapps.xml              etc/jetty8
+debian/jetty.conf                            etc/jetty8
+
+debian/root-webapp/*                                 var/lib/jetty8/webapps/root
+test-jetty-webapp/src/main/webapp/jetty_banner.gif   var/lib/jetty8/webapps/root
+jetty-distribution/src/main/resources/contexts       etc/jetty8
+jetty-distribution/src/main/resources/resources      usr/share/jetty8
+jetty-start/target/classes/org/eclipse/jetty/start/start.config etc/jetty8
+
+LICENSE-CONTRIBUTOR/cla-*   usr/share/doc/jetty8/LICENSES
+LICENSE-CONTRIBUTOR/ccla-*  usr/share/doc/jetty8/LICENSES
+NOTICE.txt                  usr/share/doc/jetty8/LICENSES
+debian/README.Debian        usr/share/doc/jetty8

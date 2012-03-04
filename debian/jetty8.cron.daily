@@ -1,6 +1,6 @@
 #!/bin/sh
 
-NAME=jetty
+NAME=jetty8
 DEFAULT=/etc/default/$NAME
 
 # The following variables can be overwritten in $DEFAULT

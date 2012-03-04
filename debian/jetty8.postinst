@@ -4,12 +4,12 @@ set -e
 case "$1" in
     configure)
 	if ! id jetty > /dev/null 2>&1 ; then
-	    adduser --system --home /usr/share/jetty --no-create-home \
+	    adduser --system --home /usr/share/jetty8 --no-create-home \
 		--group --disabled-password --shell /bin/false \
 		jetty
 	fi
-	chown -R jetty:adm /var/cache/jetty /var/log/jetty /var/lib/jetty
-	chmod 750 /var/log/jetty
+	chown -R jetty:adm /var/cache/jetty8 /var/log/jetty8 /var/lib/jetty8
+	chmod 750 /var/log/jetty8
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)

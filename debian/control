@@ -1,4 +1,4 @@
-Source: jetty
+Source: jetty8
 Section: java
 Priority: optional
 Maintainer: Debian Java Maintainers <pkg-java-maintainers@lists.alioth.debian.org>
@@ -15,17 +15,17 @@ Vcs-Svn: svn://svn.debian.org/svn/pkg-java/trunk/jetty
 Vcs-Browser: http://svn.debian.org/wsvn/pkg-java/trunk/jetty
 Homepage: http://jetty.mortbay.com/
 
-Package: libjetty-java
+Package: libjetty8-java
 Architecture: all
 Depends: ${misc:Depends}, libservlet3.0-java
-Suggests: jetty, libjetty-java-doc
+Suggests: jetty8, libjetty8-java-doc
 Description: Java servlet engine and webserver -- core libraries
  Jetty is an Open Source HTTP Servlet Server written in 100% Java.
  It is designed to be light weight, high performance, embeddable,
  extensible and flexible, thus making it an ideal platform for serving
  dynamic HTTP requests from any Java application.
 
-#Package: libjetty-java-doc
+#Package: libjetty8-java-doc
 #Section: doc
 #Architecture: all
 #Depends: ${misc:Depends}
@@ -39,13 +39,13 @@ Description: Java servlet engine and webserver -- core libraries
 # .
 # This package contains the Javadoc for libjetty-java.
 
-Package: libjetty-extra-java
+Package: libjetty8-extra-java
 Architecture: all
-Depends: ${misc:Depends}, libjetty-java (>= ${source:Version}),
+Depends: ${misc:Depends}, libjetty8-java (>= ${source:Version}),
  libtomcat7-java (>= 7.0.26), libasm3-java, libgnujaf-java,
  libgnumail-java, libjakarta-taglibs-standard-java, libservlet3.0-java,
  jstl1.1-java
-Suggests: jetty
+Suggests: jetty8
 Description: Java servlet engine and webserver -- extra libraries
  Jetty is an Open Source HTTP Servlet Server written in 100% Java.
  It is designed to be light weight, high performance, embeddable,
@@ -55,12 +55,12 @@ Description: Java servlet engine and webserver -- extra libraries
  jetty-servlet-tester, jetty-ajp, jetty-java5-threadpool,
  jetty-client, jetty-rewrite-handler, jetty-plus, jetty-annotations
 
-Package: jetty
+Package: jetty8
 Architecture: all
-Depends: ${misc:Depends}, libjetty-java (>= ${source:Version}),
+Depends: ${misc:Depends}, libjetty8-java (>= ${source:Version}),
  adduser, apache2-utils, default-jre-headless | java5-runtime-headless | java6-runtime-headless
-Suggests: libjetty-extra-java (>= ${source:Version}),
- libjetty-java-doc (>= ${source:Version})
+Suggests: libjetty8-extra-java (>= ${source:Version}),
+ libjetty8-java-doc (>= ${source:Version})
 Description: Java servlet engine and webserver
  Jetty is an Open Source HTTP Servlet Server written in 100% Java.
  It is designed to be light weight, high performance, embeddable,

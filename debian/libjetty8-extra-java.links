@@ -1,0 +1,12 @@
+usr/share/java/tomcat-annotations-api.jar    usr/share/jetty8/lib/annotations/javax.annotation.jar
+usr/share/java/asm3.jar                      usr/share/jetty8/lib/annotations/org.objectweb.asm.jar
+usr/share/java/asm3-commons.jar              usr/share/jetty8/lib/annotations/org.objectweb.asm.commons.jar
+
+usr/share/java/activation.jar                usr/share/jetty8/lib/jndi/javax.activation.jar
+usr/share/java/gnumail.jar                   usr/share/jetty8/lib/jndi/javax.mail.jar
+
+usr/share/java/tomcat-jsp-api-2.2.jar        usr/share/jetty8/lib/jsp/javax.servlet.jsp.jar
+usr/share/java/tomcat-jasper.jar             usr/share/jetty8/lib/jsp/org.apache.jasper.jar
+usr/share/java/jstl1.1.jar                   usr/share/jetty8/lib/jsp/javax.servlet.jsp.jstl.jar
+usr/share/java/tomcat-el-api-2.2.jar         usr/share/jetty8/lib/jsp/javax.el.jar
+usr/share/java/standard.jar                  usr/share/jetty8/lib/jsp/org.apache.taglibs.standard.jar

@@ -1,0 +1,7 @@
+etc/jetty8
+etc/jetty8/contexts
+usr/share/jetty8
+usr/share/doc/jetty8
+var/lib/jetty8/webapps
+var/log/jetty8
+var/cache/jetty8

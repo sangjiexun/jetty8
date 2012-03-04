@@ -1,37 +1,37 @@
 jetty for Debian
 ----------------
 
-This debian package installs Jetty 6 into /usr/share/jetty
+This debian package installs Jetty 8 into /usr/share/jetty8
 and other directories under /var and /etc, which are linked to
-from the /usr/share/jetty directory.
+from the /usr/share/jetty8 directory.
 
-The configuration of the server is in /etc/jetty. The configuration
-files listed in /etc/jetty/jetty.conf are passed to the command
-line of Jetty when it is started by /etc/init.d/jetty
+The configuration of the server is in /etc/jetty8. The configuration
+files listed in /etc/jetty8/jetty.conf are passed to the command
+line of Jetty when it is started by /etc/init.d/jetty8
 
-Webapps can be deployed by placing them in /var/lib/jetty/webapps
-(linked from /usr/share/jetty/webapps)
+Webapps can be deployed by placing them in /var/lib/jetty8/webapps
+(linked from /usr/share/jetty8/webapps)
 Additional contexts can be configured and (hot) deployed via the 
-/etc/jetty/contexts directory (linked from /usr/share/jetty/contexts).
+/etc/jetty8/contexts directory (linked from /usr/share/jetty8/contexts).
 
 Installing:
 
-$ sudo apt-get install libjetty-java
-$ sudo apt-get install libjetty-extra-java
-$ sudo apt-get install jetty
+$ sudo apt-get install libjetty8-java
+$ sudo apt-get install libjetty8-extra-java
+$ sudo apt-get install jetty8
 
 Starting:
 
-Edit /etc/default/jetty
+Edit /etc/default/jetty8
 Set:
 NO_START=0
 
 Then do:
-$ sudo service jetty start
+$ sudo service jetty8 start
 
 Stopping:
 
-$ sudo service jetty stop
+$ sudo service jetty8 stop
 
 --
 

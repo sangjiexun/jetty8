@@ -1,0 +1,5 @@
+var/lib/jetty8/webapps  usr/share/jetty8/webapps
+var/log/jetty8          usr/share/jetty8/logs
+etc/jetty8              usr/share/jetty8/etc
+etc/jetty8/contexts     usr/share/jetty8/contexts
+usr/share/doc/libjetty8-java/api usr/share/jetty8/javadoc

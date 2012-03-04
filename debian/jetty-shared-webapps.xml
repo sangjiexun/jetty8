@@ -30,7 +30,7 @@
       <Arg>
         <New class="org.eclipse.jetty.deploy.WebAppDeployer">
           <Set name="contexts"><Ref id="Contexts"/></Set>
-          <Set name="webAppDir">/usr/share/jetty/webapps</Set>
+          <Set name="webAppDir">/usr/share/jetty8/webapps</Set>
           <Set name="parentLoaderPriority">false</Set>
           <Set name="extract">true</Set>
           <Set name="allowDuplicates">false</Set>

@@ -18,33 +18,35 @@ LIBJETTY_EXTRA_JARS := ajp annotations client jndi monitor plus
 # Some java sources contain UTF-8 characters, build fails with C locale
 export LC_ALL=C.UTF-8
 
-install/libjetty-java:: libjetty-java-mh-install
-	version=$(wildcard debian/libjetty-java/usr/share/maven-repo/org/eclipse/jetty/jetty-server/8*); \
+install/libjetty8-java:: libjetty8-java-mh-install
+	version=$(wildcard debian/libjetty8-java/usr/share/maven-repo/org/eclipse/jetty/jetty-server/8*); \
 	version=$$(basename $$version); \
 	for lib in $(LIBJETTY_JARS); do \
-		mh_installjar -plibjetty-java --java-lib --usj-name=jetty-$$lib \
+		mh_installjar -plibjetty8-java --java-lib --usj-name=jetty8-$$lib \
 		    jetty-$$lib/pom.xml jetty-$$lib/target/jetty-$$lib-*.jar; \
 		if [ $$lib = "start" ]; then \
 		    continue; \
 		fi; \
 		jar=jetty-$$lib-$$version.jar; \
-		dh_link -plibjetty-java usr/share/java/$$jar usr/share/jetty/lib/$$jar; \
+		jar8=jetty8-$$lib-$$version.jar; \
+		dh_link -plibjetty8-java usr/share/java/$$jar8 usr/share/jetty8/lib/$$jar; \
 	done; \
-	dh_link -plibjetty-java usr/share/java/jetty-start-$$version.jar usr/share/jetty/start.jar
+	dh_link -plibjetty8-java usr/share/java/jetty8-start-$$version.jar usr/share/jetty8/start.jar
 
-install/libjetty-extra-java:: libjetty-extra-java-mh-install
-	version=$(wildcard debian/libjetty-extra-java/usr/share/maven-repo/org/eclipse/jetty/jetty-ajp/8*); \
+install/libjetty8-extra-java:: libjetty8-extra-java-mh-install
+	version=$(wildcard debian/libjetty8-extra-java/usr/share/maven-repo/org/eclipse/jetty/jetty-ajp/8*); \
 	version=$$(basename $$version); \
 	for lib in $(LIBJETTY_EXTRA_JARS); do \
-		mh_installjar -plibjetty-extra-java --java-lib --usj-name=jetty-$$lib \
+		mh_installjar -plibjetty8-extra-java --java-lib --usj-name=jetty8-$$lib \
 		    jetty-$$lib/pom.xml jetty-$$lib/target/jetty-$$lib-*.jar; \
 		if [ $$lib = "monitor" ]; then \
 		    continue; \
 		fi; \
 		jar=jetty-$$lib-$$version.jar; \
-		dh_link -plibjetty-extra-java usr/share/java/$$jar usr/share/jetty/lib/$$jar; \
+		jar8=jetty8-$$lib-$$version.jar; \
+		dh_link -plibjetty8-extra-java usr/share/java/$$jar8 usr/share/jetty8/lib/$$jar; \
 	done; \
-	dh_link -plibjetty-extra-java usr/share/java/jetty-monitor-$$version.jar usr/share/jetty/lib/monitor/jetty-monitor.jar
+	dh_link -plibjetty8-extra-java usr/share/java/jetty8-monitor-$$version.jar usr/share/jetty8/lib/monitor/jetty-monitor.jar
 
 %-mh-install:
 	mh_install -p$(patsubst %-mh-install,%,$@)

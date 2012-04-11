@@ -7,7 +7,8 @@ include /usr/share/cdbs/1/class/maven.mk
 JAVA_HOME := /usr/lib/jvm/default-java
 
 DEB_MAVEN_INSTALL_TARGET :=
-DEB_MAVEN_DOC_TARGET :=
+DEB_MAVEN_INSTALL_DOC_TARGET :=
+DEB_MAVEN_DOC_TARGET := javadoc:aggregate
 DEB_MAVEN_ARGS := -P-aggregates -P-osgi
 
 LIBJETTY_JARS := continuation deploy http io jmx overlay-deployer policy rewrite security \
@@ -47,6 +48,10 @@ install/libjetty8-extra-java:: libjetty8-extra-java-mh-install
 		dh_link -plibjetty8-extra-java usr/share/java/$$jar8 usr/share/jetty8/lib/$$jar; \
 	done; \
 	dh_link -plibjetty8-extra-java usr/share/java/jetty8-monitor-$$version.jar usr/share/jetty8/lib/monitor/jetty-monitor.jar
+
+install/libjetty8-java-doc::
+	mv target/site/apidocs target/site/api
+	dh_install -p libjetty8-java-doc
 
 %-mh-install:
 	mh_install -p$(patsubst %-mh-install,%,$@)

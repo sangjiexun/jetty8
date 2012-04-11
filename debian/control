@@ -25,19 +25,19 @@ Description: Java servlet engine and webserver -- core libraries
  extensible and flexible, thus making it an ideal platform for serving
  dynamic HTTP requests from any Java application.
 
-#Package: libjetty8-java-doc
-#Section: doc
-#Architecture: all
-#Depends: ${misc:Depends}
-#Recommends: default-jdk-doc, libgnumail-java-doc, libservlet2.5-java-doc
-#Suggests: libjetty-java
-#Description: Javadoc for the Jetty API
-# Jetty is an Open Source HTTP Servlet Server written in 100% Java.
-# It is designed to be light weight, high performance, embeddable,
-# extensible and flexible, thus making it an ideal platform for serving
-# dynamic HTTP requests from any Java application.
-# .
-# This package contains the Javadoc for libjetty-java.
+Package: libjetty8-java-doc
+Section: doc
+Architecture: all
+Depends: ${misc:Depends}
+Recommends: default-jdk-doc, libgnumail-java-doc, libservlet2.5-java-doc
+Suggests: libjetty-java
+Description: Javadoc for the Jetty API
+ Jetty is an Open Source HTTP Servlet Server written in 100% Java.
+ It is designed to be light weight, high performance, embeddable,
+ extensible and flexible, thus making it an ideal platform for serving
+ dynamic HTTP requests from any Java application.
+ .
+ This package contains the Javadoc for libjetty-java.
 
 Package: libjetty8-extra-java
 Architecture: all

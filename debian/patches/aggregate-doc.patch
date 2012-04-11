@@ -1,0 +1,21 @@
+From: Jakub Adam <jakub.adam@ktknet.cz>
+Date: Thu, 12 Apr 2012 22:46:39 +0200
+Subject: aggregate-doc
+
+---
+ pom.xml |    2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/pom.xml b/pom.xml
+index 9933028..571e228 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -281,6 +281,8 @@
+           <groupId>org.apache.maven.plugins</groupId>
+           <artifactId>maven-javadoc-plugin</artifactId>
+           <configuration>
++            <aggregate>true</aggregate>
++            <outputDirectory>${project.build.directory}/api</outputDirectory>
+             <docfilessubdirs>true</docfilessubdirs>
+             <detectLinks>false</detectLinks>
+             <detectJavaApiLink>true</detectJavaApiLink>

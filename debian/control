@@ -10,7 +10,7 @@ Build-Depends: debhelper (>= 7), cdbs (>> 0.4.5.3), default-jdk, ant-optional, m
  libgnujaf-java, junit, libtomcat7-java (>= 7.0.26), default-jdk-doc, libmaven-bundle-plugin-java,
  libmockito-java, glassfish-jmac-api (>= 1:2.1.1-b31g-2), libgeronimo-jta-1.1-spec-java,
  libjstl1.1-java, libservlet3.0-java
-Standards-Version: 3.8.4
+Standards-Version: 3.9.3
 Vcs-Svn: svn://svn.debian.org/svn/pkg-java/trunk/jetty
 Vcs-Browser: http://svn.debian.org/wsvn/pkg-java/trunk/jetty
 Homepage: http://jetty.mortbay.com/

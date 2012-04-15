@@ -1,58 +1,254 @@
-Format-Specification: http://dep.debian.net/deps/dep5/
-Name: Jetty
-Maintainer: Mortbay Consulting
-Source: http://jetty.mortbay.com/
+Format: http://anonscm.debian.org/viewvc/dep/web/deps/dep5.mdwn?revision=202
+Upstream-Name: Jetty
 
 Files: *
-Copyright: 2004-2009, Mortbay Consulting
-License: Apache-2.0
+Copyright: 2006-2011, Mort Bay Consulting Pty. Ltd.
+License: Apache-2.0 or EPL-1.0
 
-Files: contrib/jboss/src/main/java/org/jboss/jetty/JettyDeployer.java
-Copyright: 2006, Mort Bay Consulting Pty. Ltd.
-License: LGPL-2
+Files: jetty-client/src/test/java/org/eclipse/jetty/client/Http100ContinueTest.java
+       jetty-deploy/src/test/java/org/eclipse/jetty/deploy/MockAppProvider.java
+       jetty-deploy/src/test/java/org/eclipse/jetty/deploy/bindings/GlobalWebappConfigBindingTest.java
+       jetty-deploy/src/test/java/org/eclipse/jetty/deploy/AppLifeCyclePathCollector.java
+       jetty-deploy/src/test/java/org/eclipse/jetty/deploy/DeploymentManagerLifeCyclePathTest.java
+       jetty-deploy/src/test/java/org/eclipse/jetty/deploy/providers/WebAppProviderTest.java
+       jetty-deploy/src/test/java/org/eclipse/jetty/deploy/providers/ScanningAppProviderStartupTest.java
+       jetty-deploy/src/test/java/org/eclipse/jetty/deploy/providers/ScanningAppProviderRuntimeUpdatesTest.java
+       jetty-deploy/src/test/java/org/eclipse/jetty/deploy/test/XmlConfiguredJetty.java
+       jetty-deploy/src/test/java/org/eclipse/jetty/deploy/AppLifeCycleTest.java
+       jetty-deploy/src/main/java/org/eclipse/jetty/deploy/bindings/StandardUndeployer.java
+       jetty-deploy/src/main/java/org/eclipse/jetty/deploy/bindings/StandardStopper.java
+       jetty-deploy/src/main/java/org/eclipse/jetty/deploy/bindings/StandardDeployer.java
+       jetty-deploy/src/main/java/org/eclipse/jetty/deploy/bindings/OrderedGroupBinding.java
+       jetty-deploy/src/main/java/org/eclipse/jetty/deploy/bindings/StandardStarter.java
+       jetty-deploy/src/main/java/org/eclipse/jetty/deploy/bindings/GlobalWebappConfigBinding.java
+       jetty-deploy/src/main/java/org/eclipse/jetty/deploy/bindings/DebugBinding.java
+       jetty-deploy/src/main/java/org/eclipse/jetty/deploy/util/FileID.java
+       jetty-deploy/src/main/java/org/eclipse/jetty/deploy/providers/ScanningAppProvider.java
+       jetty-deploy/src/main/java/org/eclipse/jetty/deploy/AppLifeCycle.java
+       jetty-deploy/src/main/java/org/eclipse/jetty/deploy/graph/Path.java
+       jetty-deploy/src/main/java/org/eclipse/jetty/deploy/graph/GraphOutputDot.java
+       jetty-deploy/src/main/java/org/eclipse/jetty/deploy/graph/Graph.java
+       jetty-deploy/src/main/java/org/eclipse/jetty/deploy/graph/Node.java
+       jetty-deploy/src/main/java/org/eclipse/jetty/deploy/graph/Edge.java
+       jetty-deploy/src/main/java/org/eclipse/jetty/deploy/App.java
+       jetty-deploy/src/main/java/org/eclipse/jetty/deploy/DeploymentManager.java
+       jetty-deploy/src/main/java/org/eclipse/jetty/deploy/AppProvider.java
+       jetty-http/src/test/java/org/eclipse/jetty/http/HttpURITest.java
+       jetty-http/src/main/java/org/eclipse/jetty/http/gzip/GzipStream.java
+       jetty-http/src/main/java/org/eclipse/jetty/http/gzip/GzipResponseWrapper.java
+       jetty-jmx/src/test/java/org/eclipse/jetty/jmx/ConnectorServerTest.java
+       jetty-monitor/src/test/java/org/eclipse/jetty/monitor/AttrEventTriggerTest.java
+       jetty-monitor/src/test/java/org/eclipse/jetty/monitor/ThreadMonitorTest.java
+       jetty-monitor/src/test/java/org/eclipse/jetty/monitor/RequestCounter.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/triggers/GreaterThanAttrEventTrigger.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/triggers/LessThanOrEqualToAttrEventTrigger.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/triggers/GreaterThanOrEqualToAttrEventTrigger.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/triggers/OrEventTrigger.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/triggers/EqualToAttrEventTrigger.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/triggers/RangeInclAttrEventTrigger.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/triggers/AttrEventTrigger.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/triggers/AndEventTrigger.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/triggers/RangeAttrEventTrigger.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/triggers/AggregateEventTrigger.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/triggers/LessThanAttrEventTrigger.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/JMXMonitor.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/thread/ThreadMonitorInfo.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/thread/ThreadMonitorException.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/jmx/EventState.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/jmx/ServiceConnection.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/jmx/EventNotifier.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/jmx/LoggingNotifier.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/jmx/MonitorAction.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/jmx/EventTrigger.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/jmx/MonitorTask.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/jmx/NotifierGroup.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/jmx/SimpleAction.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/jmx/ConsoleNotifier.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/integration/JavaMonitorTrigger.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/integration/JavaMonitorAction.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/integration/JavaMonitorTools.java
+       jetty-monitor/src/main/java/org/eclipse/jetty/monitor/ThreadMonitor.java
+       jetty-policy/src/test/java/org/eclipse/jetty/policy/JettyPolicyTest.java
+       jetty-policy/src/test/java/org/eclipse/jetty/policy/JettyPolicyRuntimeTest.java
+       jetty-policy/src/test/java/org/eclipse/jetty/policy/PolicyContextTest.java
+       jetty-policy/src/main/java/org/eclipse/jetty/policy/PolicyBlock.java
+       jetty-policy/src/main/java/org/eclipse/jetty/policy/loader/PolicyFileScanner.java
+       jetty-policy/src/main/java/org/eclipse/jetty/policy/loader/DefaultPolicyLoader.java
+       jetty-policy/src/main/java/org/eclipse/jetty/policy/PolicyException.java
+       jetty-policy/src/main/java/org/eclipse/jetty/policy/PolicyContext.java
+       jetty-policy/src/main/java/org/eclipse/jetty/policy/JettyPolicyConfigurator.java
+       jetty-policy/src/main/java/org/eclipse/jetty/policy/entry/PrincipalEntry.java
+       jetty-policy/src/main/java/org/eclipse/jetty/policy/entry/PermissionEntry.java
+       jetty-policy/src/main/java/org/eclipse/jetty/policy/entry/KeystoreEntry.java
+       jetty-policy/src/main/java/org/eclipse/jetty/policy/entry/GrantEntry.java
+       jetty-policy/src/main/java/org/eclipse/jetty/policy/entry/AbstractEntry.java
+       jetty-policy/src/main/java/org/eclipse/jetty/policy/JettyPolicy.java
+       jetty-rewrite/src/test/java/org/eclipse/jetty/rewrite/handler/RedirectRegexRuleTest.java
+       jetty-rewrite/src/main/java/org/eclipse/jetty/rewrite/handler/RedirectRegexRule.java
+       jetty-security/src/main/java/org/eclipse/jetty/security/authentication/SpnegoAuthenticator.java
+       jetty-security/src/main/java/org/eclipse/jetty/security/SpnegoUserIdentity.java
+       jetty-security/src/main/java/org/eclipse/jetty/security/SpnegoLoginService.java
+       jetty-server/src/test/java/org/eclipse/jetty/server/ConnectorCloseTestBase.java
+       jetty-server/src/test/java/org/eclipse/jetty/server/InclusiveByteRangeTest.java
+       jetty-server/src/test/java/org/eclipse/jetty/server/SelectChannelConnectorCloseTest.java
+       jetty-server/src/test/java/org/eclipse/jetty/server/SocketConnectorCloseTest.java
+       jetty-server/src/main/java/org/eclipse/jetty/server/session/jmx/AbstractSessionManagerMBean.java
+       jetty-server/src/main/java/org/eclipse/jetty/server/handler/GzipHandler.java
+       jetty-server/src/main/java/org/eclipse/jetty/server/handler/jmx/AbstractHandlerMBean.java
+       jetty-servlet/src/main/java/org/eclipse/jetty/servlet/jmx/ServletMappingMBean.java
+       jetty-servlet/src/main/java/org/eclipse/jetty/servlet/jmx/FilterMappingMBean.java
+       jetty-start/src/test/java/org/eclipse/jetty/start/ConfigTest.java
+       jetty-start/src/test/java/org/eclipse/jetty/start/VersionTest.java
+       jetty-start/src/main/java/org/eclipse/jetty/start/FilenameComparator.java
+       jetty-start/src/main/java/org/eclipse/jetty/start/JarVersion.java
+       jetty-start/src/main/java/org/eclipse/jetty/start/Config.java
+       jetty-util/src/main/java/org/eclipse/jetty/util/ssl/SslContextFactory.java
+       jetty-util/src/main/java/org/eclipse/jetty/util/ssl/AliasedX509KeyManager.java
+       jetty-util/src/main/java/org/eclipse/jetty/util/ssl/AliasedX509ExtendedKeyManager.java
+       jetty-util/src/main/java/org/eclipse/jetty/util/security/CertificateUtils.java
+       jetty-util/src/main/java/org/eclipse/jetty/util/security/CertificateValidator.java
+       jetty-util/src/main/java/org/eclipse/jetty/util/log/JettyAwareLogger.java
+       jetty-util/src/main/java/org/eclipse/jetty/util/log/JavaUtilLog.java
+       test-jetty-webapp/src/test/java/org/eclipse/jetty/DispatchServletTest.java
+       tests/test-webapps/test-webapp-rfc2616/src/main/java/org/eclipse/jetty/tests/webapp/HttpMethodsServlet.java
+       tests/test-integration/src/test/java/org/eclipse/jetty/test/rfcs/RFC2616NIOHttpTest.java
+       tests/test-integration/src/test/java/org/eclipse/jetty/test/rfcs/RFC2616NIOHttpsTest.java
+       tests/test-integration/src/test/java/org/eclipse/jetty/test/rfcs/RFC2616BIOHttpTest.java
+       tests/test-integration/src/test/java/org/eclipse/jetty/test/rfcs/RFC2616BaseTest.java
+       tests/test-integration/src/test/java/org/eclipse/jetty/test/rfcs/RFC2616BIOHttpsTest.java
+       tests/test-integration/src/test/java/org/eclipse/jetty/test/support/StringUtil.java
+       tests/test-integration/src/test/java/org/eclipse/jetty/test/support/EchoHandler.java
+       tests/test-integration/src/test/java/org/eclipse/jetty/test/support/rawhttp/HttpResponseTester.java
+       tests/test-integration/src/test/java/org/eclipse/jetty/test/support/rawhttp/HttpSocket.java
+       tests/test-integration/src/test/java/org/eclipse/jetty/test/support/rawhttp/HttpRequestTester.java
+       tests/test-integration/src/test/java/org/eclipse/jetty/test/support/rawhttp/HttpResponseTesterTest.java
+       tests/test-integration/src/test/java/org/eclipse/jetty/test/support/rawhttp/HttpTesting.java
+       tests/test-integration/src/test/java/org/eclipse/jetty/test/support/rawhttp/HttpSocketImpl.java
+       tests/test-integration/src/test/java/org/eclipse/jetty/test/support/rawhttp/HttpRequestTesterTest.java
+       tests/test-integration/src/test/java/org/eclipse/jetty/test/support/rawhttp/HttpsSocketImpl.java
+       tests/test-integration/src/test/java/org/eclipse/jetty/test/support/TestableJettyServer.java
+       tests/test-integration/src/test/java/org/eclipse/jetty/test/monitor/JavaMonitorIntegrationTest.java
+       tests/test-integration/src/test/java/org/eclipse/jetty/test/monitor/ProgramConfigTest.java
+       tests/test-integration/src/test/java/org/eclipse/jetty/test/monitor/JmxServiceTest.java
+       tests/test-integration/src/test/java/org/eclipse/jetty/test/monitor/XmlConfigTest.java
+       tests/test-integration/src/test/java/org/eclipse/jetty/test/DefaultHandlerTest.java
+Copyright: Webtide LLC
+License: Apache-2.0 or EPL-1.0
 
-Files: contrib/jetty-ant/src/main/java/org/mortbay/jetty/ant/*
-Copyright: 2006-2007, Sabre Holdings
-License: Apache-2.0
+Files: jetty-io/src/main/java/org/eclipse/jetty/io/NetworkTrafficListener.java
+       jetty-io/src/main/java/org/eclipse/jetty/io/nio/NetworkTrafficSelectChannelEndPoint.java
+       jetty-nosql/src/main/java/org/eclipse/jetty/nosql/NoSqlSessionManager.java
+       jetty-nosql/src/main/java/org/eclipse/jetty/nosql/NoSqlSession.java
+       jetty-nosql/src/main/java/org/eclipse/jetty/nosql/mongodb/MongoSessionManager.java
+       jetty-nosql/src/main/java/org/eclipse/jetty/nosql/mongodb/MongoSessionIdManager.java
+       jetty-osgi/jetty-osgi-boot-warurl/src/main/java/org/eclipse/jetty/osgi/boot/warurl/internal/WarURLConnection.java
+       jetty-osgi/jetty-osgi-boot-warurl/src/main/java/org/eclipse/jetty/osgi/boot/warurl/internal/WarBundleManifestGenerator.java
+       jetty-osgi/jetty-osgi-boot-warurl/src/main/java/org/eclipse/jetty/osgi/boot/warurl/WarUrlStreamHandler.java
+       jetty-osgi/jetty-osgi-boot-warurl/src/main/java/org/eclipse/jetty/osgi/boot/warurl/WarUrlActivator.java
+       jetty-osgi/jetty-osgi-boot/src/main/java/org/eclipse/jetty/osgi/boot/OSGiWebappConstants.java
+       jetty-osgi/jetty-osgi-boot/src/main/java/org/eclipse/jetty/osgi/boot/internal/serverfactory/ServerInstanceWrapper.java
+       jetty-osgi/jetty-osgi-boot/src/main/java/org/eclipse/jetty/osgi/boot/internal/serverfactory/IManagedJettyServerRegistry.java
+       jetty-osgi/jetty-osgi-boot/src/main/java/org/eclipse/jetty/osgi/boot/internal/serverfactory/DefaultJettyAtJettyHomeHelper.java
+       jetty-osgi/jetty-osgi-boot/src/main/java/org/eclipse/jetty/osgi/boot/internal/serverfactory/JettyServersManagedFactory.java
+       jetty-osgi/jetty-osgi-boot/src/main/java/org/eclipse/jetty/osgi/boot/internal/serverfactory/JettyServerServiceTracker.java
+       jetty-osgi/jetty-osgi-boot/src/main/java/org/eclipse/jetty/osgi/boot/internal/jsp/TldLocatableURLClassloaderWithInsertedJettyClassloader.java
+       jetty-osgi/jetty-osgi-boot/src/main/java/org/eclipse/jetty/osgi/boot/internal/jsp/TldLocatableURLClassloader.java
+       jetty-osgi/jetty-osgi-boot/src/main/java/org/eclipse/jetty/osgi/boot/internal/webapp/OSGiWebappClassLoader.java
+       jetty-osgi/jetty-osgi-boot/src/main/java/org/eclipse/jetty/osgi/boot/internal/webapp/JettyContextHandlerServiceTracker.java
+       jetty-osgi/jetty-osgi-boot/src/main/java/org/eclipse/jetty/osgi/boot/internal/webapp/LibExtClassLoaderHelper.java
+       jetty-osgi/jetty-osgi-boot/src/main/java/org/eclipse/jetty/osgi/boot/internal/webapp/WebBundleTrackerCustomizer.java
+       jetty-osgi/jetty-osgi-boot/src/main/java/org/eclipse/jetty/osgi/boot/internal/webapp/IWebBundleDeployerHelper.java
+       jetty-osgi/jetty-osgi-boot/src/main/java/org/eclipse/jetty/osgi/boot/internal/webapp/WebBundleDeployerHelper.java
+       jetty-osgi/jetty-osgi-boot/src/main/java/org/eclipse/jetty/osgi/boot/utils/BundleClassLoaderHelper.java
+       jetty-osgi/jetty-osgi-boot/src/main/java/org/eclipse/jetty/osgi/boot/utils/WebappRegistrationCustomizer.java
+       jetty-osgi/jetty-osgi-boot/src/main/java/org/eclipse/jetty/osgi/boot/utils/internal/DefaultFileLocatorHelper.java
+       jetty-osgi/jetty-osgi-boot/src/main/java/org/eclipse/jetty/osgi/boot/utils/internal/DefaultBundleClassLoaderHelper.java
+       jetty-osgi/jetty-osgi-boot/src/main/java/org/eclipse/jetty/osgi/boot/utils/internal/PackageAdminServiceTracker.java
+       jetty-osgi/jetty-osgi-boot/src/main/java/org/eclipse/jetty/osgi/boot/utils/BundleFileLocatorHelper.java
+       jetty-osgi/jetty-osgi-boot/src/main/java/org/eclipse/jetty/osgi/boot/JettyBootstrapActivator.java
+       jetty-osgi/jetty-osgi-boot/src/main/java/org/eclipse/jetty/osgi/boot/OSGiServerConstants.java
+       jetty-osgi/test-jetty-osgi/src/test/java/org/eclipse/jetty/osgi/boot/TestJettyOSGiBootWithJsp.java
+       jetty-osgi/test-jetty-osgi/src/test/java/org/eclipse/jetty/osgi/boot/TestJettyOSGiBootCore.java
+       jetty-osgi/jetty-osgi-boot-jsp/src/main/java/org/eclipse/jetty/osgi/boot/jasper/WebappRegistrationCustomizerImpl.java
+       jetty-osgi/jetty-osgi-boot-jsp/src/main/java/org/eclipse/jetty/osgi/boot/jasper/PluggableWebAppRegistrationCustomizerImpl.java
+       jetty-osgi/jetty-osgi-boot-jsp/src/main/java/org/eclipse/jetty/osgi/boot/jsp/FragmentActivator.java
+       jetty-server/src/test/java/org/eclipse/jetty/server/NetworkTrafficListenerTest.java
+       jetty-server/src/main/java/org/eclipse/jetty/server/nio/NetworkTrafficSelectChannelConnector.java
+       jetty-websocket/src/test/java/org/eclipse/jetty/websocket/WebSocketParserD00Test.java
+       jetty-websocket/src/test/java/org/eclipse/jetty/websocket/WebSocketClientTest.java
+       jetty-websocket/src/test/java/org/eclipse/jetty/websocket/TestClient.java
+       jetty-websocket/src/test/java/org/eclipse/jetty/websocket/WebSocketRedeployTest.java
+       jetty-websocket/src/test/java/org/eclipse/jetty/websocket/WebSocketLoadRFC6455Test.java
+       jetty-websocket/src/test/java/org/eclipse/jetty/websocket/SafariWebsocketDraft0Test.java
+       jetty-websocket/src/test/java/org/eclipse/jetty/websocket/WebSocketLoadD08Test.java
+       jetty-websocket/src/test/java/org/eclipse/jetty/websocket/WebSocketMessageD06Test.java
+       jetty-websocket/src/test/java/org/eclipse/jetty/websocket/WebSocketGeneratorRFC6455Test.java
+       jetty-websocket/src/test/java/org/eclipse/jetty/websocket/WebSocketCommTest.java
+       jetty-websocket/src/test/java/org/eclipse/jetty/websocket/WebSocketGeneratorD08Test.java
+       jetty-websocket/src/test/java/org/eclipse/jetty/websocket/WebSocketGeneratorD00Test.java
+       jetty-websocket/src/test/java/org/eclipse/jetty/websocket/WebSocketParserD08Test.java
+       jetty-websocket/src/test/java/org/eclipse/jetty/websocket/WebSocketOverSSLTest.java
+       jetty-websocket/src/test/java/org/eclipse/jetty/websocket/WebSocketMessageRFC6455Test.java
+       jetty-websocket/src/test/java/org/eclipse/jetty/websocket/WebSocketMessageD08Test.java
+       jetty-websocket/src/test/java/org/eclipse/jetty/websocket/WebSocketParserD06Test.java
+       jetty-websocket/src/test/java/org/eclipse/jetty/websocket/WebSocketMessageD00Test.java
+       jetty-websocket/src/test/java/org/eclipse/jetty/websocket/TestServer.java
+       jetty-websocket/src/test/java/org/eclipse/jetty/websocket/WebSocketGeneratorD06Test.java
+       jetty-websocket/src/test/java/org/eclipse/jetty/websocket/helper/MessageSender.java
+       jetty-websocket/src/test/java/org/eclipse/jetty/websocket/helper/WebSocketCaptureServlet.java
+       jetty-websocket/src/test/java/org/eclipse/jetty/websocket/helper/CaptureSocket.java
+       jetty-websocket/src/test/java/org/eclipse/jetty/websocket/helper/SafariD00.java
+       jetty-websocket/src/test/java/org/eclipse/jetty/websocket/WebSocketParserRFC6455Test.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/WebSocketConnection.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/Extension.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/WebSocketServletConnectionD06.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/DeflateFrameExtension.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/FragmentExtension.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/RandomMaskGen.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/WebSocketClientFactory.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/WebSocketServletConnectionRFC6455.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/IdentityExtension.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/ZeroMaskGen.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/WebSocketServletConnectionD08.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/FixedMaskGen.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/WebSocketServletConnection.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/AbstractExtension.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/WebSocketServletConnectionD00.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/WebSocketClient.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/MaskGen.java
+       tests/test-sessions/test-mongodb-sessions/src/test/java/org/eclipse/jetty/nosql/mongodb/MongoTest.java
+       tests/test-sessions/test-mongodb-sessions/src/test/java/org/eclipse/jetty/nosql/mongodb/SessionSavingValueTest.java
+       tests/test-sessions/test-mongodb-sessions/src/test/java/org/eclipse/jetty/nosql/mongodb/LastAccessTimeTest.java
+       tests/test-sessions/test-mongodb-sessions/src/test/java/org/eclipse/jetty/nosql/mongodb/RemoveSessionTest.java
+Copyright: 2009-2011, Intalio, Inc
+License: Apache-2.0 or EPL-1.0
+
+
+Files: jetty-websocket/src/main/java/org/eclipse/jetty/websocket/WebSocketGenerator.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/WebSocketParser.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/WebSocketConnectionD06.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/WebSocketGeneratorD08.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/WebSocketServlet.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/WebSocketConnectionD08.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/WebSocketParserRFC6455.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/WebSocketFactory.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/WebSocketParserD06.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/WebSocketParserD00.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/WebSocketGeneratorD00.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/WebSocketBuffers.java
+       jetty-websocket/src/main/java/org/eclipse/jetty/websocket/WebSocketParserD08.java
+Copyright: 2010, Mort Bay Consulting Pty. Ltd
+           2011, Intalio, Inc
+License: Apache-2.0 or EPL-1.0
 
 Files: examples/test-webapp/src/main/webapp/WEB-INF/tags/panel.tag
+       jetty-servlet/src/test/java/org/eclipse/jetty/servlet/HolderTest.java
 Copyright: 2002, The Apache Software Foundation
 License: Apache-2.0
 
-Files: examples/test-webapp/src/test/java/com/acme/DispatchServletTest.java
-Copyright: 2009, Webtide LLC
-License: Apache-2.0
-
-Files: extras/xbean/*
-Copyright: 2005-2006, The Apache Software Foundation
-License: Apache-2.0
-
-Files: extras/gwt/src/main/java/org/mortbay/gwt/AsyncRemoteServiceServlet.java,
-  extras/gwt/src/main/java/com/google/gwt/user/server/rpc/OpenRemoteServiceServlet.java
-Copyright: 2006, Google Inc
-Copyright: 2006, Craig Day <craig@alderaan.com.au>
-License: Apache-2.0
-
-Files: modules/jetty/src/main/java/org/mortbay/jetty/security/UnixCrypt.java
-Copyright: 1996, Aki Yoshida,
-Copyright: 2001, Iris Van den Broeke, Daniel Deville.
-License: other
- Permission to use, copy, modify and distribute this software
- for non-commercial or commercial purposes and without fee is
- hereby granted provided that this copyright notice appears in
- all copies.
-
-Files: modules/jetty/src/test/java/org/mortbay/jetty/servlet/SessionManagerTest.java,
-  modules/util/src/main/java/org/mortbay/servlet/ThrottlingFilter.java
-Copyright: 2006, Tim Vernum
-License: Apache-2.0
-
-Files: modules/jetty/src/main/java/org/mortbay/jetty/security/PKCS12Import.java
-Copyright: 1999, Jason Gilbert
-License: Apache-2.0
-
-Files: modules/jetty/src/main/java/org/mortbay/jetty/security/HTAccessHandler.java
-Copyright: 2001, Deville Daniel
+Files: jetty-util/src/main/java/org/eclipse/jetty/util/security/UnixCrypt.java
+Copyright: 1996, Aki Yoshida
+           2001, Iris Van den Broeke, Daniel Deville
 License: other
  Permission to use, copy, modify and distribute this software
  for non-commercial or commercial purposes and without fee is
@@ -61,15 +257,229 @@ License: other
 
 Files: debian/*
 Copyright: 2003, Philipp Meier <meier@meisterbohne.de>
-Copyright: 2009, Ludovic Claude <ludovic.claude@laposte.net>
-Copyright: 2009, David Yu <david.yu.ftw@gmail.com>
+           2009, Ludovic Claude <ludovic.claude@laposte.net>
+           2009, David Yu <david.yu.ftw@gmail.com>
+           2012, Debian Java Maintainers <pkg-java-maintainers@lists.alioth.debian.org>
 License: Apache-2.0
 
 License: Apache-2.0
   On Debian GNU/Linux system you can find the complete text of the
   Apache 2.0 license in '/usr/share/common-licenses/Apache-2.0'.
 
-License: LGPL-2
-  On Debian GNU/Linux system you can find the complete text of the
-  LGPL 2 license in '/usr/share/common-licenses/LGPL-2'.
+License: EPL-1.0
+ Eclipse Public License - v 1.0
+ .
+ THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE
+ PUBLIC LICENSE ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THE
+ PROGRAM CONSTITUTES RECIPIENT'S ACCEPTANCE OF THIS AGREEMENT.
+ .
+ 1. DEFINITIONS
+ .
+ "Contribution" means:
+ .
+ a) in the case of the initial Contributor, the initial code and documentation
+ distributed under this Agreement, and
+ b) in the case of each subsequent Contributor:
+ .
+ i) changes to the Program, and
+ .
+ ii) additions to the Program;
+ .
+ where such changes and/or additions to the Program originate from and are
+ distributed by that particular Contributor. A Contribution 'originates'
+ from a Contributor if it was added to the Program by such Contributor itself
+ or anyone acting on such Contributor's behalf. Contributions do not include
+ additions to the Program which: (i) are separate modules of software
+ distributed in conjunction with the Program under their own license
+ agreement, and (ii) are not derivative works of the Program.
+ .
+ "Contributor" means any person or entity that distributes the Program.
+ .
+ "Licensed Patents " mean patent claims licensable by a Contributor which are
+ necessarily infringed by the use or sale of its Contribution alone or when
+ combined with the Program.
+ .
+ "Program" means the Contributions distributed in accordance with this
+ Agreement.
+ .
+ "Recipient" means anyone who receives the Program under this Agreement,
+ including all Contributors.
+ .
+ 2. GRANT OF RIGHTS
+ .
+ a) Subject to the terms of this Agreement, each Contributor hereby grants
+ Recipient a non-exclusive, worldwide, royalty-free copyright license to
+ reproduce, prepare derivative works of, publicly display, publicly perform,
+ distribute and sublicense the Contribution of such Contributor, if any,
+ and such derivative works, in source code and object code form.
+ .
+ b) Subject to the terms of this Agreement, each Contributor hereby grants
+ Recipient a non-exclusive, worldwide, royalty-free patent license under
+ Licensed Patents to make, use, sell, offer to sell, import and otherwise
+ transfer the Contribution of such Contributor, if any, in source code and
+ object code form. This patent license shall apply to the combination of
+ the Contribution and the Program if, at the time the Contribution is added
+ by the Contributor, such addition of the Contribution causes such
+ combination to be covered by the Licensed Patents. The patent license shall
+ not apply to any other combinations which include the Contribution. No
+ hardware per se is licensed hereunder.
+ .
+ c) Recipient understands that although each Contributor grants the licenses
+ to its Contributions set forth herein, no assurances are provided by any
+ Contributor that the Program does not infringe the patent or other
+ intellectual property rights of any other entity. Each Contributor disclaims
+ any liability to Recipient for claims brought by any other entity based on
+ infringement of intellectual property rights or otherwise. As a condition to
+ exercising the rights and licenses granted hereunder, each Recipient hereby
+ assumes sole responsibility to secure any other intellectual property rights
+ needed, if any. For example, if a third party patent license is required to
+ allow Recipient to distribute the Program, it is Recipient's responsibility
+ to acquire that license before distributing the Program.
+ .
+ d) Each Contributor represents that to its knowledge it has sufficient
+ copyright rights in its Contribution, if any, to grant the copyright license
+ set forth in this Agreement.
+ .
+ 3. REQUIREMENTS
+ .
+ A Contributor may choose to distribute the Program in object code form under
+ its own license agreement, provided that:
+ .
+ a) it complies with the terms and conditions of this Agreement; and
+ .
+ b) its license agreement:
+ .
+ i) effectively disclaims on behalf of all Contributors all warranties and
+ conditions, express and implied, including warranties or conditions of title
+ and non-infringement, and implied warranties or conditions of merchantability
+ and fitness for a particular purpose;
+ .
+ ii) effectively excludes on behalf of all Contributors all liability for
+ damages, including direct, indirect, special, incidental and consequential
+ damages, such as lost profits;
+ .
+ iii) states that any provisions which differ from this Agreement are offered
+ by that Contributor alone and not by any other party; and
+ .
+ iv) states that source code for the Program is available from such
+ Contributor, and informs licensees how to obtain it in a reasonable manner on
+ or through a medium customarily used for software exchange.
+ .
+ When the Program is made available in source code form:
+ .
+ a) it must be made available under this Agreement; and
+ .
+ b) a copy of this Agreement must be included with each copy of the Program.
+ .
+ Contributors may not remove or alter any copyright notices contained within
+ the Program.
+ .
+ Each Contributor must identify itself as the originator of its Contribution,
+ if any, in a manner that reasonably allows subsequent Recipients to identify
+ the originator of the Contribution.
+ .
+ 4. COMMERCIAL DISTRIBUTION
+ .
+ Commercial distributors of software may accept certain responsibilities with
+ respect to end users, business partners and the like. While this license is
+ intended to facilitate the commercial use of the Program, the Contributor who
+ includes the Program in a commercial product offering should do so in a manner
+ which does not create potential liability for other Contributors. Therefore,
+ if a Contributor includes the Program in a commercial product offering, such
+ Contributor ("Commercial Contributor") hereby agrees to defend and indemnify
+ every other Contributor ("Indemnified Contributor") against any losses,
+ damages and costs (collectively "Losses") arising from claims, lawsuits and
+ other legal actions brought by a third party against the Indemnified
+ Contributor to the extent caused by the acts or omissions of such Commercial
+ Contributor in connection with its distribution of the Program in a commercial
+ product offering. The obligations in this section do not apply to any claims
+ or Losses relating to any actual or alleged intellectual property
+ infringement. In order to qualify, an Indemnified Contributor must:
+ a) promptly notify the Commercial Contributor in writing of such claim, and
+ b) allow the Commercial Contributor to control, and cooperate with the
+ Commercial Contributor in, the defense and any related settlement
+ negotiations. The Indemnified Contributor may participate in any such claim
+ at its own expense.
+ .
+ For example, a Contributor might include the Program in a commercial product
+ offering, Product X. That Contributor is then a Commercial Contributor. If
+ that Commercial Contributor then makes performance claims, or offers
+ warranties related to Product X, those performance claims and warranties are
+ such Commercial Contributor's responsibility alone. Under this section, the
+ Commercial Contributor would have to defend claims against the other
+ Contributors related to those performance claims and warranties, and if a
+ court requires any other Contributor to pay any damages as a result, the
+ Commercial Contributor must pay those damages.
+ .
+ 5. NO WARRANTY
+ .
+ EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, THE PROGRAM IS PROVIDED ON
+ AN "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, EITHER
+ EXPRESS OR IMPLIED INCLUDING, WITHOUT LIMITATION, ANY WARRANTIES OR
+ CONDITIONS OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY OR FITNESS FOR A
+ PARTICULAR PURPOSE. Each Recipient is solely responsible for determining the
+ appropriateness of using and distributing the Program and assumes all
+ risks associated with its exercise of rights under this Agreement ,
+ including but not limited to the risks and costs of program errors,
+ compliance with applicable laws, damage to or loss of data, programs or
+ equipment, and unavailability or interruption of operations.
+ .
+ 6. DISCLAIMER OF LIABILITY
+ .
+ EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, NEITHER RECIPIENT NOR ANY
+ CONTRIBUTORS SHALL HAVE ANY LIABILITY FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING WITHOUT LIMITATION
+ LOST PROFITS), HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ ARISING IN ANY WAY OUT OF THE USE OR DISTRIBUTION OF THE PROGRAM OR THE
+ EXERCISE OF ANY RIGHTS GRANTED HEREUNDER, EVEN IF ADVISED OF THE
+ POSSIBILITY OF SUCH DAMAGES.
+ .
+ 7. GENERAL
+ .
+ If any provision of this Agreement is invalid or unenforceable under
+ applicable law, it shall not affect the validity or enforceability of the
+ remainder of the terms of this Agreement, and without further action by
+ the parties hereto, such provision shall be reformed to the minimum extent
+ necessary to make such provision valid and enforceable.
+ .
+ If Recipient institutes patent litigation against any entity (including a
+ cross-claim or counterclaim in a lawsuit) alleging that the Program itself
+ (excluding combinations of the Program with other software or hardware)
+ infringes such Recipient's patent(s), then such Recipient's rights granted
+ under Section 2(b) shall terminate as of the date such litigation is filed.
+ .
+ All Recipient's rights under this Agreement shall terminate if it fails to
+ comply with any of the material terms or conditions of this Agreement and
+ does not cure such failure in a reasonable period of time after becoming
+ aware of such noncompliance. If all Recipient's rights under this Agreement
+ terminate, Recipient agrees to cease use and distribution of the Program as
+ soon as reasonably practicable. However, Recipient's obligations under this
+ Agreement and any licenses granted by Recipient relating to the Program
+ shall continue and survive.
+ .
+ Everyone is permitted to copy and distribute copies of this Agreement, but
+ in order to avoid inconsistency the Agreement is copyrighted and may only
+ be modified in the following manner. The Agreement Steward reserves the
+ right to publish new versions (including revisions) of this Agreement from
+ time to time. No one other than the Agreement Steward has the right to
+ modify this Agreement. The Eclipse Foundation is the initial Agreement
+ Steward. The Eclipse Foundation may assign the responsibility to serve as
+ the Agreement Steward to a suitable separate entity. Each new version of
+ the Agreement will be given a distinguishing version number. The Program
+ (including Contributions) may always be distributed subject to the version
+ of the Agreement under which it was received. In addition, after a new
+ version of the Agreement is published, Contributor may elect to distribute
+ the Program (including its Contributions) under the new version. Except as
+ expressly stated in Sections 2(a) and 2(b) above, Recipient receives no
+ rights or licenses to the intellectual property of any Contributor under
+ this Agreement, whether expressly, by implication, estoppel or otherwise.
+ All rights in the Program not expressly granted under this Agreement are
+ reserved.
+ .
+ This Agreement is governed by the laws of the State of New York and the
+ intellectual property laws of the United States of America. No party to
+ this Agreement will bring a legal action under this Agreement more than
+ one year after the cause of action arose. Each party waives its rights to
+ a jury trial in any resulting litigation.
 

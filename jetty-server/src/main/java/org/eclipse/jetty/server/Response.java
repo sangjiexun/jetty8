@@ -137,7 +137,7 @@ public class Response implements HttpServletResponse
             if (i>=0)
             {
                 http_only=true;
-                comment=comment.substring(i,i+HTTP_ONLY_COMMENT.length()).trim();
+                comment=comment.replace(HTTP_ONLY_COMMENT,"").trim();
                 if (comment.length()==0)
                     comment=null;
             }
@@ -793,7 +793,7 @@ public class Response implements HttpServletResponse
         if (isCommitted() || _connection.isIncluding())
             return;
         _connection._generator.setContentLength(len);
-        if (len>=0)
+        if (len>0)
         {
             _connection.getResponseFields().putLongField(HttpHeaders.CONTENT_LENGTH, len);
             if (_connection._generator.isAllContentWritten())

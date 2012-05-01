@@ -385,7 +385,7 @@ public class ResponseTest
     {
         String[][] tests={
                 {"/other/location?name=value","http://myhost:8888/other/location;jsessionid=12345?name=value"},
-                {"/other/location","http://myhost:8888/other/location"},
+               /* {"/other/location","http://myhost:8888/other/location"},
                 {"/other/l%20cation","http://myhost:8888/other/l%20cation"},
                 {"location","http://myhost:8888/path/location"},
                 {"./location","http://myhost:8888/path/location"},
@@ -393,7 +393,8 @@ public class ResponseTest
                 {"/other/l%20cation","http://myhost:8888/other/l%20cation"},
                 {"l%20cation","http://myhost:8888/path/l%20cation"},
                 {"./l%20cation","http://myhost:8888/path/l%20cation"},
-                {"../l%20cation","http://myhost:8888/l%20cation"},
+                {"../l%20cation","http://myhost:8888/l%20cation"},*/
+                {"../locati%C3%abn","http://myhost:8888/locati%C3%ABn"},
         };
         
         for (int i=1;i<tests.length;i++)
@@ -441,6 +442,20 @@ public class ResponseTest
         }
     }
 
+    @Test
+    public void testZeroContent () throws Exception
+    {
+        Response response = new Response (new TestHttpConnection(connector, new ByteArrayEndPoint(), connector.getServer()));
+        PrintWriter writer = response.getWriter();
+        response.setContentLength(0);
+        assertTrue(!response.isCommitted());
+        assertTrue(!writer.checkError());
+        writer.print("");
+        assertTrue(!writer.checkError());
+        assertTrue(response.isCommitted());
+    }
+    
+    
     @Test
     public void testHead() throws Exception
     {
@@ -503,7 +518,7 @@ public class ResponseTest
         
         String set = response.getHttpFields().getStringField("Set-Cookie");
         
-        assertEquals("name=value;Path=/path;Domain=domain;Secure;HttpOnly",set);
+        assertEquals("name=value;Comment=comment;Path=/path;Domain=domain;Secure;HttpOnly",set);
     }
 
     private Response newResponse()

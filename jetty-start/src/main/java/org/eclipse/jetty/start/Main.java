@@ -381,7 +381,7 @@ public class Main
                     }
                     else if (info.equals("@STARTINI"))
                     {
-                        List<String> ini = loadStartIni(null);
+                        List<String> ini = loadStartIni(new File(_jettyHome,"start.ini"));
                         if (ini != null && ini.size() > 0)
                         {
                             for (String a : ini)
@@ -641,7 +641,7 @@ public class Main
         }
 
         File xml = new File(xmlFilename);
-        if (xml.exists() && xml.isFile() && xml.isAbsolute())
+        if (xml.exists() && xml.isFile())
         {
             return xml.getAbsolutePath();
         }

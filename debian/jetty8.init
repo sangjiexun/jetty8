@@ -4,9 +4,10 @@
 #
 # Written by Philipp Meier <meier@meisterbohne.de>
 # Modified for Jetty 6 by Ludovic Claude <ludovic.claude@laposte.net>
+# Modified for Jetty 8 by Jakub Adam <jakub.adam@ktknet.cz>
 #
 ### BEGIN INIT INFO
-# Provides:          jetty
+# Provides:          jetty8
 # Required-Start:    $local_fs $remote_fs $network
 # Required-Stop:     $local_fs $remote_fs $network
 # Should-Start:      $named

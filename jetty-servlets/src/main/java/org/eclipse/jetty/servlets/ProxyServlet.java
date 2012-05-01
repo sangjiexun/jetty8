@@ -414,7 +414,7 @@ public class ProxyServlet implements Servlet
                 if (request.getQueryString() != null)
                     uri += "?" + request.getQueryString();
 
-                HttpURI url = proxyHttpURI(request.getScheme(),request.getServerName(),request.getServerPort(),uri);
+                HttpURI url = proxyHttpURI(request,uri);
 
                 if (debug != 0)
                     _log.debug(debug + " proxy " + uri + "-->" + url);
@@ -597,12 +597,14 @@ public class ProxyServlet implements Servlet
                 {
                     exchange.addRequestHeader("X-Forwarded-For",request.getRemoteAddr());
                     exchange.addRequestHeader("X-Forwarded-Proto",request.getScheme());
-                    exchange.addRequestHeader("X-Forwarded-Host",request.getServerName());
+                    exchange.addRequestHeader("X-Forwarded-Host",request.getHeader("Host"));
                     exchange.addRequestHeader("X-Forwarded-Server",request.getLocalName());
                 }
 
                 if (hasContent)
+                {
                     exchange.setRequestContentSource(in);
+                }
 
                 customizeExchange(exchange, request);
 
@@ -675,6 +677,11 @@ public class ProxyServlet implements Servlet
     }
 
     /* ------------------------------------------------------------ */
+    protected HttpURI proxyHttpURI(HttpServletRequest request, String uri) throws MalformedURLException
+    {
+        return proxyHttpURI(request.getScheme(), request.getServerName(), request.getServerPort(), uri);
+    }
+
     protected HttpURI proxyHttpURI(String scheme, String serverName, int serverPort, String uri) throws MalformedURLException
     {
         if (!validateDestination(serverName,uri))

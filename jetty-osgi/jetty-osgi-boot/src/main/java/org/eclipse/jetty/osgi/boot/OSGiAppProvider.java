@@ -186,6 +186,9 @@ public class OSGiAppProvider extends ScanningAppProvider implements AppProvider
         {
             ((WebAppContext)wah).setConfigurationClasses(_configurationClasses);
         }
+        
+        if (_defaultsDescriptor != null)
+            ((WebAppContext)wah).setDefaultsDescriptor(_defaultsDescriptor);
         return app.getContextHandler();
     }
 
@@ -345,7 +348,7 @@ public class OSGiAppProvider extends ScanningAppProvider implements AppProvider
         }
         catch (IOException e)
         {
-            e.printStackTrace();
+            LOG.warn(e);
             return null;
         }
     }
@@ -366,11 +369,11 @@ public class OSGiAppProvider extends ScanningAppProvider implements AppProvider
         }
         catch (IOException e)
         {
-            e.printStackTrace();
+            LOG.warn(e);
             return null;
         }
     }
-    
+
     public boolean isExtract()
     {
         return _extractWars;

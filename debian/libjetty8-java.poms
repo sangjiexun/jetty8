@@ -6,12 +6,6 @@ jetty-security/pom.xml --java-lib --usj-name=jetty8-security
 jetty-server/pom.xml --java-lib --usj-name=jetty8-server
 jetty-jndi/pom.xml --ignore-pom
 jetty-xml/pom.xml --java-lib --usj-name=jetty8-xml
-jetty-aggregate/jetty-webapp/pom.xml
-jetty-aggregate/jetty-server/pom.xml
-jetty-aggregate/jetty-all/pom.xml
-jetty-aggregate/jetty-all-server/pom.xml
-jetty-aggregate/jetty-client/pom.xml
-jetty-aggregate/jetty-plus/pom.xml --ignore-pom
 jetty-aggregate/pom.xml
 jetty-aggregate/jetty-websocket/pom.xml --java-lib --usj-name=jetty8-websocket
 jetty-aggregate/jetty-servlet/pom.xml --java-lib --usj-name=jetty8-servlet

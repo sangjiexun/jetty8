@@ -42,7 +42,7 @@ Architecture: all
 Depends: ${misc:Depends}, libjetty8-java (>= ${source:Version}),
  libtomcat7-java (>= 7.0.26), libasm3-java, libgnujaf-java,
  libgnumail-java, libjakarta-taglibs-standard-java, libservlet3.0-java,
- jstl1.1-java
+ libjstl1.1-java
 Suggests: jetty8
 Description: Java servlet engine and webserver -- extra libraries
  Jetty is an Open Source HTTP Servlet Server written in 100% Java.

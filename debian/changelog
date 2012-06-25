@@ -1,4 +1,4 @@
-jetty8 (8.1.3-4) UNRELEASED; urgency=low
+jetty8 (8.1.3-4) unstable; urgency=low
 
   * Team upload
   * Switch to use of javax.* and standard jar names for Servlet, JSP and
@@ -10,7 +10,7 @@ jetty8 (8.1.3-4) UNRELEASED; urgency=low
     - d/control: Bump minimum version of libtomcat7-java to ensure that
       the correct API jars/artifacts are provided.
 
- -- James Page <james.page@ubuntu.com>  Mon, 25 Jun 2012 13:55:45 +0100
+ -- James Page <james.page@ubuntu.com>  Mon, 25 Jun 2012 16:02:46 +0200
 
 jetty8 (8.1.3-3) unstable; urgency=low
 

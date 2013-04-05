@@ -4,13 +4,13 @@ Subject: disable-modules
 
 ---
  pom.xml |   12 ++++++------
- 1 files changed, 6 insertions(+), 6 deletions(-)
+ 1 file changed, 6 insertions(+), 6 deletions(-)
 
 diff --git a/pom.xml b/pom.xml
-index 86d79e5..9933028 100644
+index bb07f25..8c37297 100644
 --- a/pom.xml
 +++ b/pom.xml
-@@ -378,19 +378,19 @@
+@@ -379,19 +379,19 @@
      <module>jetty-start</module>
      <module>jetty-nested</module>
      <module>jetty-overlay-deployer</module>
@@ -25,9 +25,9 @@ index 86d79e5..9933028 100644
 +    <!--module>jetty-distribution</module>
 +    <module>test-continuation</module-->
      <!--module>test-continuation-jetty6</module-->
--    <module>test-jetty-servlet</module>
-+    <!--module>test-jetty-servlet</module>
-     <module>test-jetty-webapp</module>
+     <module>test-jetty-servlet</module>
+-    <module>test-jetty-webapp</module>
++    <!--module>test-jetty-webapp</module>
      <module>test-jetty-nested</module>
      <module>example-jetty-embedded</module>
      <module>example-async-rest</module>

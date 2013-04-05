@@ -47,7 +47,12 @@ install/libjetty8-extra-java:: libjetty8-extra-java-mh-install
 		jar8=jetty8-$$lib-$$version.jar; \
 		dh_link -plibjetty8-extra-java usr/share/java/$$jar8 usr/share/jetty8/lib/$$jar; \
 	done; \
-	dh_link -plibjetty8-extra-java usr/share/java/jetty8-monitor-$$version.jar usr/share/jetty8/lib/monitor/jetty-monitor.jar
+	dh_link -plibjetty8-extra-java usr/share/java/jetty8-monitor-$$version.jar usr/share/jetty8/lib/monitor/jetty-monitor.jar; \
+	# Add also test-jetty-servlet \
+	mh_installjar -plibjetty8-extra-java --java-lib --usj-name=jetty8-test-servlet \
+	    test-jetty-servlet/pom.xml test-jetty-servlet/target/test-jetty-servlet-*.jar; \
+	dh_link -plibjetty8-extra-java usr/share/java/jetty8-test-servlet-$$version.jar \
+	    usr/share/jetty8/lib/test-jetty-servlet-$$version.jar;
 
 install/libjetty8-java-doc::
 	mv target/site/apidocs target/site/api

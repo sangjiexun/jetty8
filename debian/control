@@ -8,7 +8,7 @@ Build-Depends: debhelper (>= 7), cdbs (>> 0.4.5.3), default-jdk, ant-optional, m
  libgnujaf-java, junit, libtomcat7-java (>= 7.0.28), default-jdk-doc, libmaven-bundle-plugin-java,
  libmockito-java, glassfish-jmac-api (>= 1:2.1.1-b31g-2), libgeronimo-jta-1.1-spec-java,
  libjstl1.1-java, libservlet3.0-java, libmaven-javadoc-plugin-java
-Standards-Version: 3.9.3
+Standards-Version: 3.9.4
 Vcs-Git: git://anonscm.debian.org/pkg-java/jetty8.git
 Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-java/jetty8.git
 Homepage: http://jetty.mortbay.com/

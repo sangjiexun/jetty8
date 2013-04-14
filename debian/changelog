@@ -1,3 +1,10 @@
+jetty8 (8.1.3-6) UNRELEASED; urgency=low
+
+  * Team upload.
+  * Fixed the watch file
+
+ -- Emmanuel Bourg <ebourg@apache.org>  Sun, 14 Apr 2013 21:49:49 +0200
+
 jetty8 (8.1.3-5) experimental; urgency=low
 
   * Add test-jetty-servlet jar into libjetty8-extra-java.

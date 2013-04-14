@@ -1,3 +1,2 @@
 version=3
-http://download.eclipse.org/jetty/stable-8/dist/ \
-  jetty-distribution-(\d+.\d+.\d+).v\d+.tar.gz
+http://download.eclipse.org/jetty/stable-8/dist/ .*/jetty-distribution-([\d\.]+)\.v(?:\d+)\.tar\.gz.*

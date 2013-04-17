@@ -1,3 +1,21 @@
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
+
 package org.eclipse.jetty.server.session;
 
 import java.util.ArrayList;
@@ -47,8 +65,7 @@ public abstract class AbstractSession implements AbstractSessionManager.SessionI
     private boolean _newSession;
     private int _requests;
 
-    // TODO remove this.
-    protected final Map<String,Object> _jdbcAttributes=_attributes;
+
     
     /* ------------------------------------------------------------- */
     protected AbstractSession(AbstractSessionManager abstractSessionManager, HttpServletRequest request)
@@ -77,6 +94,7 @@ public abstract class AbstractSession implements AbstractSessionManager.SessionI
         _accessed=accessed;
         _lastAccessed=accessed;
         _requests=1;
+        _maxIdleMs=_manager._dftMaxIdleSecs>0?_manager._dftMaxIdleSecs*1000L:-1;
         if (LOG.isDebugEnabled())
             LOG.debug("new session "+_nodeId+" "+_clusterId);
     }
@@ -183,6 +201,12 @@ public abstract class AbstractSession implements AbstractSessionManager.SessionI
         checkValid();
         return _lastAccessed;
     }
+    
+    /* ------------------------------------------------------------- */
+    public void setLastAccessedTime(long time)
+    {
+        _lastAccessed = time;
+    }
 
     /* ------------------------------------------------------------- */
     public int getMaxInactiveInterval()
@@ -236,6 +260,18 @@ public abstract class AbstractSession implements AbstractSessionManager.SessionI
             return (String[])_attributes.keySet().toArray(a);
         }
     }
+    
+    /* ------------------------------------------------------------ */
+    protected  Map<String,Object> getAttributeMap ()
+    {
+        return _attributes;
+    }
+    
+    /* ------------------------------------------------------------ */
+    protected void addAttributes(Map<String,Object> map)
+    {
+        _attributes.putAll(map);
+    }
 
     /* ------------------------------------------------------------ */
     protected boolean access(long time)
@@ -277,16 +313,19 @@ public abstract class AbstractSession implements AbstractSessionManager.SessionI
         _manager.removeSession(this,true);
 
         // Notify listeners and unbind values
+        boolean do_invalidate=false;
         synchronized (this)
         {
             if (!_invalid)
             {
                 if (_requests<=0)
-                    doInvalidate();
+                    do_invalidate=true;
                 else
                     _doInvalidate=true;
             }
         }
+        if (do_invalidate)
+            doInvalidate();
     }
 
     /* ------------------------------------------------------------- */

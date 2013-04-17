@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2004-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.http;
 
@@ -33,6 +38,7 @@ public interface HttpContent
     Buffer getLastModified();
     Buffer getIndirectBuffer();
     Buffer getDirectBuffer();
+    Buffer getETag();
     Resource getResource();
     long getContentLength();
     InputStream getInputStream() throws IOException;
@@ -48,19 +54,33 @@ public interface HttpContent
         final Resource _resource;
         final Buffer _mimeType;
         final int _maxBuffer;
+        final Buffer _etag;
 
+        /* ------------------------------------------------------------ */
         public ResourceAsHttpContent(final Resource resource, final Buffer mimeType)
         {
-            _resource=resource;
-            _mimeType=mimeType;
-            _maxBuffer=-1;
+            this(resource,mimeType,-1,false);
         }
-        
+
+        /* ------------------------------------------------------------ */
         public ResourceAsHttpContent(final Resource resource, final Buffer mimeType, int maxBuffer)
+        {
+            this(resource,mimeType,maxBuffer,false);
+        }
+
+        /* ------------------------------------------------------------ */
+        public ResourceAsHttpContent(final Resource resource, final Buffer mimeType, boolean etag)
+        {
+            this(resource,mimeType,-1,etag);
+        }
+
+        /* ------------------------------------------------------------ */
+        public ResourceAsHttpContent(final Resource resource, final Buffer mimeType, int maxBuffer, boolean etag)
         {
             _resource=resource;
             _mimeType=mimeType;
             _maxBuffer=maxBuffer;
+            _etag=etag?new ByteArrayBuffer(resource.getWeakETag()):null;
         }
 
         /* ------------------------------------------------------------ */
@@ -79,6 +99,12 @@ public interface HttpContent
         public Buffer getDirectBuffer()
         {
             return null;
+        }
+        
+        /* ------------------------------------------------------------ */
+        public Buffer getETag()
+        {
+            return _etag;
         }
 
         /* ------------------------------------------------------------ */

@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 1996-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.util;
 
@@ -93,7 +98,8 @@ public class MultiPartOutputStream extends FilterOutputStream
         out.write(__DASHDASH);
         out.write(boundaryBytes);
         out.write(__CRLF);
-        out.write(("Content-Type: "+contentType).getBytes(StringUtil.__ISO_8859_1));
+        if (contentType != null)
+            out.write(("Content-Type: "+contentType).getBytes(StringUtil.__ISO_8859_1));
         out.write(__CRLF);
         out.write(__CRLF);
     }
@@ -110,7 +116,8 @@ public class MultiPartOutputStream extends FilterOutputStream
         out.write(__DASHDASH);
         out.write(boundaryBytes);
         out.write(__CRLF);
-        out.write(("Content-Type: "+contentType).getBytes(StringUtil.__ISO_8859_1));
+        if (contentType != null)
+            out.write(("Content-Type: "+contentType).getBytes(StringUtil.__ISO_8859_1));
         out.write(__CRLF);
         for (int i=0;headers!=null && i<headers.length;i++)
         {
@@ -120,6 +127,12 @@ public class MultiPartOutputStream extends FilterOutputStream
         out.write(__CRLF);
     }
     
+    /* ------------------------------------------------------------ */
+    @Override
+    public void write(byte[] b, int off, int len) throws IOException
+    {
+        out.write(b,off,len);
+    }
 }
 
 

@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2008-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.security.jaspi.modules;
 
@@ -38,7 +43,10 @@ import org.eclipse.jetty.util.security.Password;
 import org.eclipse.jetty.security.CrossContextPsuedoSession;
 import org.eclipse.jetty.security.authentication.DeferredAuthentication;
 import org.eclipse.jetty.security.authentication.LoginCallbackImpl;
+import org.eclipse.jetty.security.authentication.SessionAuthentication;
+import org.eclipse.jetty.security.jaspi.callback.CredentialValidationCallback;
 import org.eclipse.jetty.server.Authentication;
+import org.eclipse.jetty.server.UserIdentity;
 import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.URIUtil;
 import org.eclipse.jetty.util.log.Log;
@@ -209,21 +217,22 @@ public class FormAuthModule extends BaseAuthModule
             
             
             // Check if the session is already authenticated.
-            FormCredential form_cred = (FormCredential) session.getAttribute(__J_AUTHENTICATED);
-            if (form_cred != null)
+            SessionAuthentication sessionAuth = (SessionAuthentication)session.getAttribute(SessionAuthentication.__J_AUTHENTICATED);
+            if (sessionAuth != null)
             {                
                 //TODO: ideally we would like the form auth module to be able to invoke the 
                 //loginservice.validate() method to check the previously authed user, but it is not visible
                 //to FormAuthModule
-                if (form_cred._subject == null)
+                if (sessionAuth.getUserIdentity().getSubject() == null)
                     return AuthStatus.SEND_FAILURE;
-                Set<Object> credentials = form_cred._subject.getPrivateCredentials();
+
+                Set<Object> credentials = sessionAuth.getUserIdentity().getSubject().getPrivateCredentials();
                 if (credentials == null || credentials.isEmpty())
                     return AuthStatus.SEND_FAILURE; //if no private credentials, assume it cannot be authenticated
 
                 clientSubject.getPrivateCredentials().addAll(credentials);
+                clientSubject.getPrivateCredentials().add(sessionAuth.getUserIdentity());
 
-                //boolean success = tryLogin(messageInfo, clientSubject, response, session, form_cred._jUserName, new Password(new String(form_cred._jPassword)));
                 return AuthStatus.SUCCESS;  
             }
             else if (ssoSource != null)
@@ -295,8 +304,14 @@ public class FormAuthModule extends BaseAuthModule
             if (!loginCallbacks.isEmpty())
             {
                 LoginCallbackImpl loginCallback = loginCallbacks.iterator().next();
-                FormCredential form_cred = new FormCredential(username, pwdChars, loginCallback.getUserPrincipal(), loginCallback.getSubject());
-                session.setAttribute(__J_AUTHENTICATED, form_cred);
+                Set<UserIdentity> userIdentities = clientSubject.getPrivateCredentials(UserIdentity.class);
+                if (!userIdentities.isEmpty())
+                {
+                    UserIdentity userIdentity = userIdentities.iterator().next();
+                   
+                SessionAuthentication sessionAuth = new SessionAuthentication(Constraint.__FORM_AUTH, userIdentity, password);
+                session.setAttribute(SessionAuthentication.__J_AUTHENTICATED, sessionAuth);
+                }
             }
 
             // Sign-on to SSO mechanism
@@ -313,63 +328,6 @@ public class FormAuthModule extends BaseAuthModule
     public boolean isLoginOrErrorPage(String pathInContext)
     {
         return pathInContext != null && (pathInContext.equals(_formErrorPath) || pathInContext.equals(_formLoginPath));
-    }
-
-    /* ------------------------------------------------------------ */
-    /**
-     * FORM Authentication credential holder.
-     */
-    private static class FormCredential implements Serializable, HttpSessionBindingListener
-    {
-        String _jUserName;
-
-        char[] _jPassword;
-
-        transient Principal _userPrincipal;
-        
-        transient Subject _subject;
-
-        private FormCredential(String _jUserName, char[] _jPassword, Principal _userPrincipal, Subject subject)
-        {
-            this._jUserName = _jUserName;
-            this._jPassword = _jPassword;
-            this._userPrincipal = _userPrincipal;
-            this._subject = subject;
-        }
-
-        public void valueBound(HttpSessionBindingEvent event)
-        {
-        }
-
-        public void valueUnbound(HttpSessionBindingEvent event)
-        {
-            if (LOG.isDebugEnabled()) LOG.debug("Logout " + _jUserName);
-
-            // TODO jaspi call cleanSubject()
-            // if (_realm instanceof SSORealm)
-            // ((SSORealm) _realm).clearSingleSignOn(_jUserName);
-            //
-            // if (_realm != null && _userPrincipal != null)
-            // _realm.logout(_userPrincipal);
-        }
-
-        public int hashCode()
-        {
-            return _jUserName.hashCode() + _jPassword.hashCode();
-        }
-
-        public boolean equals(Object o)
-        {
-            if (!(o instanceof FormCredential)) return false;
-            FormCredential fc = (FormCredential) o;
-            return _jUserName.equals(fc._jUserName) && Arrays.equals(_jPassword, fc._jPassword);
-        }
-
-        public String toString()
-        {
-            return "Cred[" + _jUserName + "]";
-        }
-
     }
 
 }

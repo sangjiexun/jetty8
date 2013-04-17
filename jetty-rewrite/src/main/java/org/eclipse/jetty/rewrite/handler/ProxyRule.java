@@ -1,17 +1,22 @@
-package org.eclipse.jetty.rewrite.handler;
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
-//========================================================================
-//Copyright (c) 2006-2009 Mort Bay Consulting Pty. Ltd.
-//------------------------------------------------------------------------
-//All rights reserved. This program and the accompanying materials
-//are made available under the terms of the Eclipse Public License v1.0
-//and Apache License v2.0 which accompanies this distribution.
-//The Eclipse Public License is available at
-//http://www.eclipse.org/legal/epl-v10.html
-//The Apache License v2.0 is available at
-//http://www.opensource.org/licenses/apache2.0.php
-//You may elect to redistribute this code under either of these licenses.
-//========================================================================
+package org.eclipse.jetty.rewrite.handler;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,6 +24,7 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.Locale;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -224,7 +230,7 @@ public class ProxyRule extends PatternRule
             @Override
             protected void onResponseHeader(Buffer name, Buffer value) throws IOException
             {
-                String s = name.toString().toLowerCase();
+                String s = name.toString().toLowerCase(Locale.ENGLISH);
                 if (!_DontProxyHeaders.contains(s) || (HttpHeaders.CONNECTION_BUFFER.equals(name) && HttpHeaderValues.CLOSE_BUFFER.equals(value)))
                 {
                     if (debug != 0)
@@ -343,7 +349,7 @@ public class ProxyRule extends PatternRule
         String connectionHdr = request.getHeader("Connection");
         if (connectionHdr != null)
         {
-            connectionHdr = connectionHdr.toLowerCase();
+            connectionHdr = connectionHdr.toLowerCase(Locale.ENGLISH);
             if (connectionHdr.indexOf("keep-alive") < 0 && connectionHdr.indexOf("close") < 0)
             {
                 connectionHdr = null;
@@ -365,7 +371,7 @@ public class ProxyRule extends PatternRule
         {
             // TODO could be better than this!
             String hdr = (String)enm.nextElement();
-            String lhdr = hdr.toLowerCase();
+            String lhdr = hdr.toLowerCase(Locale.ENGLISH);
 
             if (_DontProxyHeaders.contains(lhdr))
                 continue;

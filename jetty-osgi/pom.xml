@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.eclipse.jetty</groupId>
     <artifactId>jetty-project</artifactId>
-    <version>8.1.3.v20120416</version>
+    <version>8.1.10.v20130312</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <groupId>org.eclipse.jetty.osgi</groupId>
@@ -23,6 +23,8 @@
     <module>jetty-osgi-boot-jsp</module>
     <module>jetty-osgi-boot-warurl</module>
     <module>jetty-osgi-httpservice</module>
+    <module>test-jetty-osgi-webapp</module>
+    <module>test-jetty-osgi-context</module>
     <module>test-jetty-osgi</module>
   </modules>
   <build>

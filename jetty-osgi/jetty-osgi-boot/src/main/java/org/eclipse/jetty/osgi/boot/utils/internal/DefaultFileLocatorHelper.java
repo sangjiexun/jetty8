@@ -1,15 +1,21 @@
-// ========================================================================
-// Copyright (c) 2009 Intalio, Inc.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
+
 package org.eclipse.jetty.osgi.boot.utils.internal;
 
 import java.io.File;
@@ -69,7 +75,7 @@ public class DefaultFileLocatorHelper implements BundleFileLocatorHelper
         // grab the MANIFEST.MF's url
         // and then do what it takes.
         URL url = bundle.getEntry("/META-INF/MANIFEST.MF");
-      
+
         if (url.getProtocol().equals("file"))
         {
             // some osgi frameworks do use the file protocole directly in some
@@ -84,7 +90,12 @@ public class DefaultFileLocatorHelper implements BundleFileLocatorHelper
             // the File
 
             URLConnection con = url.openConnection();
-            con.setUseCaches(Resource.getDefaultUseCaches()); //work around problems where url connections cache references to jars
+            con.setUseCaches(Resource.getDefaultUseCaches()); // work around
+            // problems where
+            // url connections
+            // cache
+            // references to
+            // jars
 
             if (BUNDLE_ENTRY_FIELD == null)
             {
@@ -105,10 +116,10 @@ public class DefaultFileLocatorHelper implements BundleFileLocatorHelper
             else if (bundleEntry.getClass().getName().equals("org.eclipse.osgi.baseadaptor.bundlefile.ZipBundleEntry"))
             {
                 url = bundle.getEntry("/");
-               
+
                 con = url.openConnection();
                 con.setDefaultUseCaches(Resource.getDefaultUseCaches());
-               
+
                 if (BUNDLE_ENTRY_FIELD == null)
                 {// this one will be a DirZipBundleEntry
                     BUNDLE_ENTRY_FIELD = con.getClass().getDeclaredField("bundleEntry");
@@ -139,7 +150,6 @@ public class DefaultFileLocatorHelper implements BundleFileLocatorHelper
         {
             // observed this on felix-2.0.0
             String location = bundle.getLocation();
-            // System.err.println("location  " + location);
             if (location.startsWith("file:/"))
             {
                 URI uri = new URI(URIUtil.encodePath(location));
@@ -151,20 +161,18 @@ public class DefaultFileLocatorHelper implements BundleFileLocatorHelper
                 // it is relative to relative to the BundleArchive's
                 // m_archiveRootDir
                 File res = new File(location.substring("file:".length()));
-                if (!res.exists()) 
-                { 
-                    return null;
-                    // Object bundleArchive = getFelixBundleArchive(bundle);
-                    // File archiveRoot =
-                    // getFelixBundleArchiveRootDir(bundleArchive);
-                    // String currentLocation =
-                    // getFelixBundleArchiveCurrentLocation(bundleArchive);
-                    // System.err.println("Got the archive root " +
-                    // archiveRoot.getAbsolutePath()
-                    // + " current location " + currentLocation +
-                    // " is directory ?");
-                    // res = new File(archiveRoot, currentLocation != null
-                    // ? currentLocation : location.substring("file:".length()));
+                if (!res.exists()) { return null;
+                // Object bundleArchive = getFelixBundleArchive(bundle);
+                // File archiveRoot =
+                // getFelixBundleArchiveRootDir(bundleArchive);
+                // String currentLocation =
+                // getFelixBundleArchiveCurrentLocation(bundleArchive);
+                // System.err.println("Got the archive root " +
+                // archiveRoot.getAbsolutePath()
+                // + " current location " + currentLocation +
+                // " is directory ?");
+                // res = new File(archiveRoot, currentLocation != null
+                // ? currentLocation : location.substring("file:".length()));
                 }
                 return res;
             }
@@ -194,15 +202,12 @@ public class DefaultFileLocatorHelper implements BundleFileLocatorHelper
         }
         File bundleInstall = getBundleInstallLocation(bundle);
         File webapp = path != null && path.length() != 0 ? new File(bundleInstall, path) : bundleInstall;
-        if (!webapp.exists()) 
-        { 
-            throw new IllegalArgumentException("Unable to locate " + path
-                                               + " inside "
-                                               + bundle.getSymbolicName()
-                                               + " ("
-                                               + (bundleInstall != null ? bundleInstall.getAbsolutePath() : " no_bundle_location ")
-                                               + ")"); 
-        }
+        if (!webapp.exists()) { throw new IllegalArgumentException("Unable to locate " + path
+                                                                   + " inside "
+                                                                   + bundle.getSymbolicName()
+                                                                   + " ("
+                                                                   + (bundleInstall != null ? bundleInstall.getAbsolutePath() : " no_bundle_location ")
+                                                                   + ")"); }
         return webapp;
     }
 
@@ -292,7 +297,7 @@ public class DefaultFileLocatorHelper implements BundleFileLocatorHelper
      * 
      * @return a URL to the bundle entry that uses a common protocol
      */
-    public static URL getLocalURL(URL url)
+    public URL getLocalURL(URL url)
     {
         if ("bundleresource".equals(url.getProtocol()) || "bundleentry".equals(url.getProtocol()))
         {
@@ -300,8 +305,7 @@ public class DefaultFileLocatorHelper implements BundleFileLocatorHelper
             {
                 URLConnection conn = url.openConnection();
                 conn.setDefaultUseCaches(Resource.getDefaultUseCaches());
-                if (BUNDLE_URL_CONNECTION_getLocalURL == null && conn.getClass().getName()
-                                                                     .equals("org.eclipse.osgi.framework.internal.core.BundleURLConnection"))
+                if (BUNDLE_URL_CONNECTION_getLocalURL == null && conn.getClass().getName().equals("org.eclipse.osgi.framework.internal.core.BundleURLConnection"))
                 {
                     BUNDLE_URL_CONNECTION_getLocalURL = conn.getClass().getMethod("getLocalURL", null);
                     BUNDLE_URL_CONNECTION_getLocalURL.setAccessible(true);
@@ -329,7 +333,7 @@ public class DefaultFileLocatorHelper implements BundleFileLocatorHelper
      *         protocol
      *         </p>
      */
-    public static URL getFileURL(URL url)
+    public URL getFileURL(URL url)
     {
         if ("bundleresource".equals(url.getProtocol()) || "bundleentry".equals(url.getProtocol()))
         {
@@ -337,8 +341,7 @@ public class DefaultFileLocatorHelper implements BundleFileLocatorHelper
             {
                 URLConnection conn = url.openConnection();
                 conn.setDefaultUseCaches(Resource.getDefaultUseCaches());
-                if (BUNDLE_URL_CONNECTION_getFileURL == null && conn.getClass().getName()
-                                                                    .equals("org.eclipse.osgi.framework.internal.core.BundleURLConnection"))
+                if (BUNDLE_URL_CONNECTION_getFileURL == null && conn.getClass().getName().equals("org.eclipse.osgi.framework.internal.core.BundleURLConnection"))
                 {
                     BUNDLE_URL_CONNECTION_getFileURL = conn.getClass().getMethod("getFileURL", null);
                     BUNDLE_URL_CONNECTION_getFileURL.setAccessible(true);

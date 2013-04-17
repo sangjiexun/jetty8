@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2006-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses.
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.servlets;
 
@@ -19,6 +24,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.servlet.ServletException;
@@ -134,7 +140,7 @@ public class CGI extends HttpServlet
         if (!_env.envMap.containsKey("SystemRoot"))
         {
             String os = System.getProperty("os.name");
-            if (os != null && os.toLowerCase().indexOf("windows") != -1)
+            if (os != null && os.toLowerCase(Locale.ENGLISH).indexOf("windows") != -1)
             {
                 _env.set("SystemRoot","C:\\WINDOWS");
             }
@@ -251,7 +257,7 @@ public class CGI extends HttpServlet
         {
             String name = (String)enm.nextElement();
             String value = req.getHeader(name);
-            env.set("HTTP_" + name.toUpperCase().replace('-','_'),value);
+            env.set("HTTP_" + name.toUpperCase(Locale.ENGLISH).replace('-','_'),value);
         }
 
         // these extra ones were from printenv on www.dev.nomura.co.uk

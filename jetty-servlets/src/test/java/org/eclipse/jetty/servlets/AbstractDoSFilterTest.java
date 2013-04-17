@@ -1,3 +1,21 @@
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
+
 package org.eclipse.jetty.servlets;
 
 import static org.junit.Assert.assertEquals;
@@ -18,6 +36,7 @@ import org.eclipse.jetty.http.HttpURI;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.testing.ServletTester;
 import org.eclipse.jetty.util.IO;
+import org.eclipse.jetty.util.log.Log;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -161,8 +180,8 @@ public abstract class AbstractDoSFilterTest
         String last="GET /ctx/dos/test HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n";
         String responses = doRequests(request+request+request+request+request,2,1100,1100,last);
 
-        assertEquals(11,count(responses,"HTTP/1.1 200 OK"));
         assertEquals(2,count(responses,"DoSFilter: delayed"));
+        assertEquals(11,count(responses,"HTTP/1.1 200 OK"));
     }
 
     @Test

@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2004-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.http;
 
@@ -971,6 +976,9 @@ public class HttpFields
         QuotedStringTokenizer.quoteIfNeeded(buf, name, delim);
         buf.append('=');
         String start=buf.toString();
+        boolean hasDomain = false;
+        boolean hasPath = false;
+        
         if (value != null && value.length() > 0)
             QuotedStringTokenizer.quoteIfNeeded(buf, value, delim);        
 
@@ -982,6 +990,7 @@ public class HttpFields
 
         if (path != null && path.length() > 0)
         {
+            hasPath = true;
             buf.append(";Path=");
             if (path.trim().startsWith("\""))
                 buf.append(path);
@@ -990,8 +999,9 @@ public class HttpFields
         }
         if (domain != null && domain.length() > 0)
         {
+            hasDomain = true;
             buf.append(";Domain=");
-            QuotedStringTokenizer.quoteIfNeeded(buf,domain.toLowerCase(),delim);
+            QuotedStringTokenizer.quoteIfNeeded(buf,domain.toLowerCase(Locale.ENGLISH),delim);
         }
 
         if (maxAge >= 0)
@@ -1022,14 +1032,20 @@ public class HttpFields
         Field last=null;
         while (field!=null)
         {
-            if (field._value!=null && field._value.toString().startsWith(start))
+            String val = (field._value == null ? null : field._value.toString());
+            if (val!=null && val.startsWith(start))
             {
-                _fields.remove(field);
-                if (last==null)
-                    _names.put(HttpHeaders.SET_COOKIE_BUFFER,field._next);
-                else
-                    last._next=field._next;
-                break;
+                //existing cookie has same name, does it also match domain and path?
+                if (((!hasDomain && !val.contains("Domain")) || (hasDomain && val.contains("Domain="+domain))) &&
+                    ((!hasPath && !val.contains("Path")) || (hasPath && val.contains("Path="+path))))
+                {
+                    _fields.remove(field);
+                    if (last==null)
+                        _names.put(HttpHeaders.SET_COOKIE_BUFFER,field._next);
+                    else
+                        last._next=field._next;
+                    break;
+                }
             }
             last=field;
             field=field._next;

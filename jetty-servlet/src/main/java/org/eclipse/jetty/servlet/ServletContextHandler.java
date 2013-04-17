@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2004-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.servlet;
 
@@ -43,6 +48,7 @@ import javax.servlet.descriptor.JspPropertyGroupDescriptor;
 import javax.servlet.descriptor.TaglibDescriptor;
 
 import org.eclipse.jetty.security.ConstraintAware;
+import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.SecurityHandler;
 import org.eclipse.jetty.server.Dispatcher;
@@ -54,6 +60,7 @@ import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.HandlerWrapper;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.util.LazyList;
+import org.eclipse.jetty.util.security.Constraint;
 
 
 /* ------------------------------------------------------------ */
@@ -372,10 +379,21 @@ public class ServletContextHandler extends ContextHandler
      * @param registration ServletRegistration.Dynamic instance that setServletSecurity was called on
      * @param servletSecurityElement new security info
      * @return the set of exact URL mappings currently associated with the registration that are also present in the web.xml
-     * security constratins and thus will be unaffected by this call.
+     * security constraints and thus will be unaffected by this call.
      */
     public Set<String> setServletSecurity(ServletRegistration.Dynamic registration, ServletSecurityElement servletSecurityElement)
     {
+        //Default implementation is to just accept them all. If using a webapp, then this behaviour is overridden in WebAppContext.setServletSecurity       
+        Collection<String> pathSpecs = registration.getMappings();
+        if (pathSpecs != null)
+        {
+            for (String pathSpec:pathSpecs)
+            {
+                List<ConstraintMapping> mappings = ConstraintSecurityHandler.createConstraintsWithMappingsForPath(registration.getName(), pathSpec, servletSecurityElement);
+                for (ConstraintMapping m:mappings)
+                    ((ConstraintAware)getSecurityHandler()).addConstraintMapping(m);
+            }
+        }
         return Collections.emptySet();
     }
 
@@ -815,11 +833,24 @@ public class ServletContextHandler extends ContextHandler
                 throw new UnsupportedOperationException();
 
             final ServletHandler handler = ServletContextHandler.this.getServletHandler();
-            final FilterHolder holder= handler.newFilterHolder(Holder.Source.JAVAX_API);
-            holder.setName(filterName);
-            holder.setHeldClass(filterClass);
-            handler.addFilter(holder);
-            return holder.getRegistration();
+            FilterHolder holder = handler.getFilter(filterName);
+            if (holder == null)
+            {
+                //new filter
+                holder = handler.newFilterHolder(Holder.Source.JAVAX_API);
+                holder.setName(filterName);
+                holder.setHeldClass(filterClass);
+                handler.addFilter(holder);
+                return holder.getRegistration();
+            }
+            if (holder.getClassName()==null && holder.getHeldClass()==null)
+            {
+                //preliminary filter registration completion
+                holder.setHeldClass(filterClass);
+                return holder.getRegistration();
+            }
+            else
+                return null; //existing filter
         }
 
         /* ------------------------------------------------------------ */
@@ -836,11 +867,24 @@ public class ServletContextHandler extends ContextHandler
                 throw new UnsupportedOperationException();
 
             final ServletHandler handler = ServletContextHandler.this.getServletHandler();
-            final FilterHolder holder= handler.newFilterHolder(Holder.Source.JAVAX_API);
-            holder.setName(filterName);
-            holder.setClassName(className);
-            handler.addFilter(holder);
-            return holder.getRegistration();
+            FilterHolder holder = handler.getFilter(filterName);
+            if (holder == null)
+            {
+                //new filter
+                holder = handler.newFilterHolder(Holder.Source.JAVAX_API);
+                holder.setName(filterName);
+                holder.setClassName(className);
+                handler.addFilter(holder);
+                return holder.getRegistration();
+            }
+            if (holder.getClassName()==null && holder.getHeldClass()==null)
+            {
+                //preliminary filter registration completion
+                holder.setClassName(className);
+                return holder.getRegistration();
+            }
+            else
+                return null; //existing filter
         }
 
 
@@ -858,11 +902,25 @@ public class ServletContextHandler extends ContextHandler
                 throw new UnsupportedOperationException();
             
             final ServletHandler handler = ServletContextHandler.this.getServletHandler();
-            final FilterHolder holder= handler.newFilterHolder(Holder.Source.JAVAX_API);
-            holder.setName(filterName);
-            holder.setFilter(filter);
-            handler.addFilter(holder);
-            return holder.getRegistration();
+            FilterHolder holder = handler.getFilter(filterName);
+            if (holder == null)
+            {
+                //new filter
+                holder = handler.newFilterHolder(Holder.Source.JAVAX_API);
+                holder.setName(filterName);
+                holder.setFilter(filter);
+                handler.addFilter(holder);
+                return holder.getRegistration();
+            }
+            
+            if (holder.getClassName()==null && holder.getHeldClass()==null)
+            {
+                //preliminary filter registration completion
+                holder.setFilter(filter);
+                return holder.getRegistration();
+            }
+            else
+                return null; //existing filter
         }
         
         /* ------------------------------------------------------------ */
@@ -877,13 +935,27 @@ public class ServletContextHandler extends ContextHandler
             
             if (!_enabled)
                 throw new UnsupportedOperationException();
-
+            
             final ServletHandler handler = ServletContextHandler.this.getServletHandler();
-            final ServletHolder holder= handler.newServletHolder(Holder.Source.JAVAX_API);
-            holder.setName(servletName);
-            holder.setHeldClass(servletClass);
-            handler.addServlet(holder);
-            return dynamicHolderAdded(holder);
+            ServletHolder holder = handler.getServlet(servletName);
+            if (holder == null)
+            {
+                //new servlet
+                holder = handler.newServletHolder(Holder.Source.JAVAX_API);
+                holder.setName(servletName);
+                holder.setHeldClass(servletClass);
+                handler.addServlet(holder);
+                return dynamicHolderAdded(holder);
+            }
+
+            //complete a partial registration
+            if (holder.getClassName()==null && holder.getHeldClass()==null)
+            {
+                holder.setHeldClass(servletClass);
+                return holder.getRegistration();
+            }
+            else
+                return null; //existing completed registration for servlet name      
         }
 
         /* ------------------------------------------------------------ */
@@ -899,12 +971,27 @@ public class ServletContextHandler extends ContextHandler
             if (!_enabled)
                 throw new UnsupportedOperationException();
 
-            final ServletHandler handler = ServletContextHandler.this.getServletHandler();
-            final ServletHolder holder= handler.newServletHolder(Holder.Source.JAVAX_API);
-            holder.setName(servletName);
-            holder.setClassName(className);
-            handler.addServlet(holder);
-            return dynamicHolderAdded(holder);
+
+            final ServletHandler handler = ServletContextHandler.this.getServletHandler();            
+            ServletHolder holder = handler.getServlet(servletName);
+            if (holder == null)
+            {
+                //new servlet
+                holder = handler.newServletHolder(Holder.Source.JAVAX_API);
+                holder.setName(servletName);
+                holder.setClassName(className);
+                handler.addServlet(holder);
+                return dynamicHolderAdded(holder);
+            }
+
+            //complete a partial registration
+            if (holder.getClassName()==null && holder.getHeldClass()==null)
+            {
+                holder.setClassName(className); 
+                return holder.getRegistration();
+            }
+            else
+                return null; //existing completed registration for servlet name
         }
 
         /* ------------------------------------------------------------ */
@@ -919,13 +1006,28 @@ public class ServletContextHandler extends ContextHandler
 
             if (!_enabled)
                 throw new UnsupportedOperationException();
+
+            //TODO handle partial registrations
             
             final ServletHandler handler = ServletContextHandler.this.getServletHandler();
-            final ServletHolder holder= handler.newServletHolder(Holder.Source.JAVAX_API);
-            holder.setName(servletName);
-            holder.setServlet(servlet);
-            handler.addServlet(holder);
-            return dynamicHolderAdded(holder);
+            ServletHolder holder = handler.getServlet(servletName);
+            if (holder == null)
+            {
+                holder = handler.newServletHolder(Holder.Source.JAVAX_API);
+                holder.setName(servletName);
+                holder.setServlet(servlet);
+                handler.addServlet(holder);
+                return dynamicHolderAdded(holder);
+            }
+            
+            //complete a partial registration
+            if (holder.getClassName()==null && holder.getHeldClass()==null)
+            {
+                holder.setServlet(servlet);
+                return holder.getRegistration();
+            }
+            else
+                return null; //existing completed registration for servlet name
         }
 
         /* ------------------------------------------------------------ */

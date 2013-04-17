@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2006-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.annotations;
 
@@ -30,10 +35,16 @@ public class ClassInheritanceHandler implements ClassHandler
     private static final Logger LOG = Log.getLogger(ClassInheritanceHandler.class);
 
     
-    MultiMap _inheritanceMap = new MultiMap();
+    MultiMap _inheritanceMap;
     
     public ClassInheritanceHandler()
     {
+       _inheritanceMap = new MultiMap();
+    }
+    
+    public ClassInheritanceHandler(MultiMap map)
+    {
+        _inheritanceMap = map;
     }
 
     public void handle(String className, int version, int access, String signature, String superName, String[] interfaces)

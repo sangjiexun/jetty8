@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2006-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses.
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.servlets;
 
@@ -25,6 +30,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -174,6 +180,16 @@ public class ProxyServlet implements Servlet
     }
 
     /**
+     * Create and return an HttpClientInstance
+     *
+     * @return HttpClient
+     */
+    protected HttpClient createHttpClientInstance()
+    {
+        return new HttpClient();
+    }
+
+    /**
      * Create and return an HttpClient based on ServletConfig
      *
      * By default this implementation will create an instance of the
@@ -185,7 +201,7 @@ public class ProxyServlet implements Servlet
      */
     protected HttpClient createHttpClient(ServletConfig config) throws Exception
     {
-        HttpClient client = new HttpClient();
+        HttpClient client = createHttpClientInstance();
         client.setConnectorType(HttpClient.CONNECTOR_SELECT_CHANNEL);
 
         String t = config.getInitParameter("maxThreads");
@@ -473,13 +489,20 @@ public class ProxyServlet implements Servlet
                     @Override
                     protected void onResponseHeader(Buffer name, Buffer value) throws IOException
                     {
-                        String s = name.toString().toLowerCase();
+                        String nameString = name.toString();
+                        String s = nameString.toLowerCase(Locale.ENGLISH);
                         if (!_DontProxyHeaders.contains(s) || (HttpHeaders.CONNECTION_BUFFER.equals(name) && HttpHeaderValues.CLOSE_BUFFER.equals(value)))
                         {
                             if (debug != 0)
                                 _log.debug(debug + " " + name + ": " + value);
 
-                            response.addHeader(name.toString(),value.toString());
+                            String filteredHeaderValue = filterResponseHeaderValue(nameString,value.toString(),request);
+                            if (filteredHeaderValue != null && filteredHeaderValue.trim().length() > 0)
+                            {
+                                if (debug != 0)
+                                    _log.debug(debug + " " + name + ": (filtered): " + filteredHeaderValue);
+                                response.addHeader(nameString,filteredHeaderValue);
+                            }
                         }
                         else if (debug != 0)
                             _log.debug(debug + " " + name + "! " + value);
@@ -504,7 +527,7 @@ public class ProxyServlet implements Servlet
                         if (ex instanceof EofException)
                         {
                             _log.ignore(ex);
-                            return;
+                            //return;
                         }
                         handleOnException(ex,request,response);
 
@@ -538,7 +561,7 @@ public class ProxyServlet implements Servlet
                 String connectionHdr = request.getHeader("Connection");
                 if (connectionHdr != null)
                 {
-                    connectionHdr = connectionHdr.toLowerCase();
+                    connectionHdr = connectionHdr.toLowerCase(Locale.ENGLISH);
                     if (connectionHdr.indexOf("keep-alive") < 0 && connectionHdr.indexOf("close") < 0)
                         connectionHdr = null;
                 }
@@ -556,8 +579,14 @@ public class ProxyServlet implements Servlet
                 {
                     // TODO could be better than this!
                     String hdr = (String)enm.nextElement();
-                    String lhdr = hdr.toLowerCase();
+                    String lhdr = hdr.toLowerCase(Locale.ENGLISH);
 
+                    if ("transfer-encoding".equals(lhdr))
+                    {
+                        if (request.getHeader("transfer-encoding").indexOf("chunk")>=0)
+                            hasContent = true;
+                    }
+                    
                     if (_DontProxyHeaders.contains(lhdr))
                         continue;
                     if (connectionHdr != null && connectionHdr.indexOf(lhdr) >= 0)
@@ -776,8 +805,22 @@ public class ProxyServlet implements Servlet
     }
 
     /**
+     * Extension point for remote server response header filtering. The default implementation returns the header value as is. If null is returned, this header
+     * won't be forwarded back to the client.
+     * 
+     * @param headerName
+     * @param headerValue
+     * @param request
+     * @return filteredHeaderValue
+     */
+    protected String filterResponseHeaderValue(String headerName, String headerValue, HttpServletRequest request)
+    {
+        return headerValue;
+    }
+
+    /**
      * Transparent Proxy.
-     *
+     * 
      * This convenience extension to ProxyServlet configures the servlet as a transparent proxy. The servlet is configured with init parameters:
      * <ul>
      * <li>ProxyTo - a URI like http://host:80/context to which the request is proxied.
@@ -785,7 +828,7 @@ public class ProxyServlet implements Servlet
      * </ul>
      * For example, if a request was received at /foo/bar and the ProxyTo was http://host:80/context and the Prefix was /foo, then the request would be proxied
      * to http://host:80/context/bar
-     *
+     * 
      */
     public static class Transparent extends ProxyServlet
     {

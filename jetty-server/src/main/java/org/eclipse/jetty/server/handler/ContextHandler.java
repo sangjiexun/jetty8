@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2004-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses.
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.server.handler;
 
@@ -27,11 +32,12 @@ import java.util.Enumeration;
 import java.util.EventListener;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.EnumSet;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.RequestDispatcher;
@@ -68,6 +74,7 @@ import org.eclipse.jetty.util.Attributes;
 import org.eclipse.jetty.util.AttributesMap;
 import org.eclipse.jetty.util.LazyList;
 import org.eclipse.jetty.util.Loader;
+import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.TypeUtil;
 import org.eclipse.jetty.util.URIUtil;
 import org.eclipse.jetty.util.component.AggregateLifeCycle;
@@ -133,8 +140,8 @@ public class ContextHandler extends ScopedHandler implements Attributes, Server.
     private EventListener[] _eventListeners;
     private Logger _logger;
     private boolean _allowNullPathInfo;
-    private int _maxFormKeys = Integer.getInteger("org.eclipse.jetty.server.Request.maxFormKeys",1000).intValue();
-    private int _maxFormContentSize = Integer.getInteger("org.eclipse.jetty.server.Request.maxFormContentSize",200000).intValue();
+    private int _maxFormKeys = Integer.getInteger("org.eclipse.jetty.server.Request.maxFormKeys",-1).intValue();
+    private int _maxFormContentSize = Integer.getInteger("org.eclipse.jetty.server.Request.maxFormContentSize",-1).intValue();
     private boolean _compactPath = false;
     private boolean _aliases = false;
 
@@ -143,6 +150,8 @@ public class ContextHandler extends ScopedHandler implements Attributes, Server.
     private Object _requestListeners;
     private Object _requestAttributeListeners;
     private Map<String, Object> _managedAttributes;
+    private String[] _protectedTargets;
+    private final CopyOnWriteArrayList<AliasCheck> _aliasChecks = new CopyOnWriteArrayList<ContextHandler.AliasCheck>();
 
     private boolean _shutdown = false;
     private boolean _available = true;
@@ -161,6 +170,7 @@ public class ContextHandler extends ScopedHandler implements Attributes, Server.
         _attributes = new AttributesMap();
         _contextAttributes = new AttributesMap();
         _initParams = new HashMap<String, String>();
+        addAliasCheck(new ApproveNonExistentDirectoryAliases());
     }
 
     /* ------------------------------------------------------------ */
@@ -174,6 +184,7 @@ public class ContextHandler extends ScopedHandler implements Attributes, Server.
         _attributes = new AttributesMap();
         _contextAttributes = new AttributesMap();
         _initParams = new HashMap<String, String>();
+        addAliasCheck(new ApproveNonExistentDirectoryAliases());
     }
 
     /* ------------------------------------------------------------ */
@@ -762,7 +773,6 @@ public class ContextHandler extends ScopedHandler implements Attributes, Server.
     public void callContextInitialized (ServletContextListener l, ServletContextEvent e)
     {
         l.contextInitialized(e);
-        LOG.info("started {}",this);
     }
 
     /* ------------------------------------------------------------ */
@@ -936,7 +946,7 @@ public class ContextHandler extends ScopedHandler implements Attributes, Server.
         if (old_context != _scontext)
         {
             // check the target.
-            if (DispatcherType.REQUEST.equals(dispatch) || DispatcherType.ASYNC.equals(dispatch))
+            if (DispatcherType.REQUEST.equals(dispatch) || DispatcherType.ASYNC.equals(dispatch) || (DispatcherType.ERROR.equals(dispatch) && baseRequest.getAsyncContinuation().isExpired()))
             {
                 if (_compactPath)
                     target = URIUtil.compactPath(target);
@@ -1131,13 +1141,49 @@ public class ContextHandler extends ScopedHandler implements Attributes, Server.
     /* ------------------------------------------------------------ */
     /**
      * Check the target. Called by {@link #handle(String, Request, HttpServletRequest, HttpServletResponse)} when a target within a context is determined. If
-     * the target is protected, 404 is returned. The default implementation always returns false.
+     * the target is protected, 404 is returned. 
      */
     /* ------------------------------------------------------------ */
-    protected boolean isProtectedTarget(String target)
+    public boolean isProtectedTarget(String target)
     {
-        return false;
+        if (target == null || _protectedTargets == null)
+            return false;
+        
+        while (target.startsWith("//"))
+            target=URIUtil.compactPath(target);
+        
+        boolean isProtected = false;
+        int i=0;
+        while (!isProtected && i<_protectedTargets.length)
+        {
+            isProtected = StringUtil.startsWithIgnoreCase(target, _protectedTargets[i++]);
+        }
+        return isProtected;
     }
+    
+    
+    public void setProtectedTargets (String[] targets)
+    {
+        if (targets == null)
+        {
+            _protectedTargets = null;
+            return;
+        }
+        
+        _protectedTargets = new String[targets.length];
+        System.arraycopy(targets, 0, _protectedTargets, 0, targets.length);
+    }
+    
+    public String[] getProtectedTargets ()
+    {
+        if (_protectedTargets == null)
+            return null;
+        
+        String[] tmp = new String[_protectedTargets.length];
+        System.arraycopy(_protectedTargets, 0, tmp, 0, _protectedTargets.length);
+        return tmp;
+    }
+    
 
     /* ------------------------------------------------------------ */
     /*
@@ -1523,14 +1569,23 @@ public class ContextHandler extends ScopedHandler implements Attributes, Server.
             path = URIUtil.canonicalPath(path);
             Resource resource = _baseResource.addPath(path);
 
+            // Is the resource aliased?
             if (!_aliases && resource.getAlias() != null)
             {
-                if (resource.exists())
-                    LOG.warn("Aliased resource: " + resource + "~=" + resource.getAlias());
-                else if (path.endsWith("/") && resource.getAlias().toString().endsWith(path))
-                    return resource;
-                else if (LOG.isDebugEnabled())
+                if (LOG.isDebugEnabled())
                     LOG.debug("Aliased resource: " + resource + "~=" + resource.getAlias());
+
+                // alias checks
+                for (Iterator<AliasCheck> i=_aliasChecks.iterator();i.hasNext();)
+                {
+                    AliasCheck check = i.next();
+                    if (check.check(path,resource))
+                    {
+                        if (LOG.isDebugEnabled())
+                            LOG.debug("Aliased resource: " + resource + " approved by " + check);
+                        return resource;
+                    }
+                }
                 return null;
             }
 
@@ -1610,6 +1665,25 @@ public class ContextHandler extends ScopedHandler implements Attributes, Server.
             return host.substring(0,host.length() - 1);
 
         return host;
+    }
+    
+    /* ------------------------------------------------------------ */
+    /**
+     * Add an AliasCheck instance to possibly permit aliased resources
+     * @param check The alias checker
+     */
+    public void addAliasCheck(AliasCheck check)
+    {
+        _aliasChecks.add(check);
+    }
+    
+    /* ------------------------------------------------------------ */
+    /**
+     * @return Mutable list of Alias checks
+     */
+    public List<AliasCheck> getAliasChecks()
+    {
+        return _aliasChecks;
     }
 
     /* ------------------------------------------------------------ */
@@ -1793,8 +1867,8 @@ public class ContextHandler extends ScopedHandler implements Attributes, Server.
                     query = uriInContext.substring(q + 1);
                     uriInContext = uriInContext.substring(0,q);
                 }
-                if ((q = uriInContext.indexOf(';')) > 0)
-                    uriInContext = uriInContext.substring(0,q);
+                // if ((q = uriInContext.indexOf(';')) > 0)
+                //     uriInContext = uriInContext.substring(0,q);
 
                 String pathInContext = URIUtil.canonicalPath(URIUtil.decodePath(uriInContext));
                 String uri = URIUtil.addPaths(getContextPath(),uriInContext);
@@ -2253,6 +2327,7 @@ public class ContextHandler extends ScopedHandler implements Attributes, Server.
             if (!_enabled)
                 throw new UnsupportedOperationException();
             ContextHandler.this.addEventListener(t);
+            ContextHandler.this.restrictEventListener(t);
         }
 
         @Override
@@ -2388,5 +2463,72 @@ public class ContextHandler extends ScopedHandler implements Attributes, Server.
             }
         }
 
+    }
+    
+    
+    /* ------------------------------------------------------------ */
+    /** Interface to check aliases
+     */
+    public interface AliasCheck
+    {
+        /* ------------------------------------------------------------ */
+        /** Check an alias
+         * @param path The path the aliased resource was created for
+         * @param resource The aliased resourced
+         * @return True if the resource is OK to be served.
+         */
+        boolean check(String path, Resource resource);
+    }
+    
+    
+    /* ------------------------------------------------------------ */
+    /** Approve Aliases with same suffix.
+     * Eg. a symbolic link from /foobar.html to /somewhere/wibble.html would be
+     * approved because both the resource and alias end with ".html".
+     */
+    public static class ApproveSameSuffixAliases implements AliasCheck
+    {
+        public boolean check(String path, Resource resource)
+        {
+            int dot = path.lastIndexOf('.');
+            if (dot<0)
+                return false;
+            String suffix=path.substring(dot);
+            return resource.getAlias().toString().endsWith(suffix);
+        }
+    }
+    
+    
+    /* ------------------------------------------------------------ */
+    /** Approve Aliases with a path prefix.
+     * Eg. a symbolic link from /dirA/foobar.html to /dirB/foobar.html would be
+     * approved because both the resource and alias end with "/foobar.html".
+     */
+    public static class ApprovePathPrefixAliases implements AliasCheck
+    {
+        public boolean check(String path, Resource resource)
+        {
+            int slash = path.lastIndexOf('/');
+            if (slash<0)
+                return false;
+            String suffix=path.substring(slash);
+            return resource.getAlias().toString().endsWith(suffix);
+        }
+    }
+    /* ------------------------------------------------------------ */
+    /** Approve Aliases of a non existent directory.
+     * If a directory "/foobar/" does not exist, then the resource is 
+     * aliased to "/foobar".  Accept such aliases.
+     */
+    public static class ApproveNonExistentDirectoryAliases implements AliasCheck
+    {
+        public boolean check(String path, Resource resource)
+        {
+            int slash = path.lastIndexOf('/');
+            if (slash<0)
+                return false;
+            String suffix=path.substring(slash);
+            return resource.getAlias().toString().endsWith(suffix);
+        }
     }
 }

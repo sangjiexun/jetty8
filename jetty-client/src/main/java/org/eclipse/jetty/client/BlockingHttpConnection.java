@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2006-2011 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses.
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.client;
 
@@ -35,6 +40,7 @@ public class BlockingHttpConnection extends AbstractHttpConnection
 
     private boolean _requestComplete;
     private Buffer _requestContentChunk;
+    private boolean _expired=false;
 
     BlockingHttpConnection(Buffers requestBuffers, Buffers responseBuffers, EndPoint endPoint)
     {
@@ -44,7 +50,51 @@ public class BlockingHttpConnection extends AbstractHttpConnection
     protected void reset() throws IOException
     {
         _requestComplete = false;
+        _expired = false;
         super.reset();
+    }
+    
+    
+    @Override
+    protected void exchangeExpired(HttpExchange exchange)
+    {
+        synchronized (this)
+        {
+           super.exchangeExpired(exchange);
+           _expired = true;
+           this.notifyAll();
+        }
+    }
+    
+    
+
+    @Override
+    public void onIdleExpired(long idleForMs)
+    {
+        try
+        {
+            LOG.debug("onIdleExpired {}ms {} {}",idleForMs,this,_endp);
+            _expired = true;
+            _endp.close();
+        }
+        catch(IOException e)
+        {
+            LOG.ignore(e);
+
+            try
+            {
+                _endp.close();
+            }
+            catch(IOException e2)
+            {
+                LOG.ignore(e2);
+            }
+        }
+
+        synchronized(this)
+        {
+            this.notifyAll();
+        }
     }
 
     @Override
@@ -66,13 +116,18 @@ public class BlockingHttpConnection extends AbstractHttpConnection
                 synchronized (this)
                 {
                     exchange=_exchange;
-
                     while (exchange == null)
                     {
                         try
                         {
                             this.wait();
                             exchange=_exchange;
+                            if (_expired)
+                            {
+                                failed = true;
+                                throw new InterruptedException();
+                            }
+
                         }
                         catch (InterruptedException e)
                         {
@@ -117,6 +172,8 @@ public class BlockingHttpConnection extends AbstractHttpConnection
                                 Buffer chunk=_requestContentChunk;
                                 _requestContentChunk=exchange.getRequestContentChunk(null);
                                 _generator.addContent(chunk,_requestContentChunk==null);
+                                if (_requestContentChunk==null)
+                                    exchange.setStatus(HttpExchange.STATUS_WAITING_FOR_RESPONSE);
                             }
                         }
                     }

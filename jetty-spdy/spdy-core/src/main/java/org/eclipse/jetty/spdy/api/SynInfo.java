@@ -1,18 +1,20 @@
-/*
- * Copyright (c) 2012 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.spdy.api;
 
@@ -28,11 +30,8 @@ public class SynInfo
      * @see #getFlags()
      */
     public static final byte FLAG_CLOSE = 1;
-    public static final byte FLAG_UNIDIRECTIONAL = 2;
 
     private final boolean close;
-    private final boolean unidirectional;
-    private final int associatedStreamId;
     private final byte priority;
     private final Headers headers;
 
@@ -56,50 +55,34 @@ public class SynInfo
      */
     public SynInfo(Headers headers, boolean close)
     {
-        this(headers, close, false, 0, (byte)0);
+        this(headers, close, (byte)0);
     }
 
     /**
-     * <p>Creates a {@link ReplyInfo} instance with the given headers and the given close flag,
-     * the given unidirectional flag, the given associated stream, and with the given priority.</p>
-     *
-     * @param headers the {@link Headers}
-     * @param close the value of the close flag
-     * @param unidirectional the value of the unidirectional flag
-     * @param associatedStreamId the associated stream id
-     * @param priority the priority
+     * <p>
+     * Creates a {@link ReplyInfo} instance with the given headers, the given close flag and with the given priority.
+     * </p>
+     * 
+     * @param headers
+     *            the {@link Headers}
+     * @param close
+     *            the value of the close flag
+     * @param priority
+     *            the priority
      */
-    public SynInfo(Headers headers, boolean close, boolean unidirectional, int associatedStreamId, byte priority)
+    public SynInfo(Headers headers, boolean close, byte priority)
     {
         this.close = close;
-        this.unidirectional = unidirectional;
-        this.associatedStreamId = associatedStreamId;
         this.priority = priority;
         this.headers = headers;
     }
-
+    
     /**
      * @return the value of the close flag
      */
     public boolean isClose()
     {
         return close;
-    }
-
-    /**
-     * @return the value of the unidirectional flag
-     */
-    public boolean isUnidirectional()
-    {
-        return unidirectional;
-    }
-
-    /**
-     * @return the associated stream id
-     */
-    public int getAssociatedStreamId()
-    {
-        return associatedStreamId;
     }
 
     /**
@@ -117,17 +100,14 @@ public class SynInfo
     {
         return headers;
     }
-
+    
     /**
-     * @return the close and unidirectional flags as integer
+     * @return the close flag as integer
      * @see #FLAG_CLOSE
-     * @see #FLAG_UNIDIRECTIONAL
      */
     public byte getFlags()
     {
-        byte flags = isClose() ? FLAG_CLOSE : 0;
-        flags += isUnidirectional() ? FLAG_UNIDIRECTIONAL : 0;
-        return flags;
+        return isClose() ? FLAG_CLOSE : 0;
     }
 
     @Override

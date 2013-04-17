@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2006-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses.
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.annotations;
 
@@ -61,6 +66,12 @@ public class TestAnnotationInheritance
         {
             annotatedMethods.add(className+"."+methodName);
         }
+        
+        @Override
+        public String getAnnotationName()
+        {
+            return "org.eclipse.jetty.annotations.Sample";
+        }
     }
 
     @After
@@ -80,7 +91,7 @@ public class TestAnnotationInheritance
 
         SampleHandler handler = new SampleHandler();
         AnnotationParser parser = new AnnotationParser();
-        parser.registerAnnotationHandler("org.eclipse.jetty.annotations.Sample", handler);
+        parser.registerHandler(handler);
         parser.parse(classNames, new ClassNameResolver ()
         {
             public boolean isExcluded(String name)

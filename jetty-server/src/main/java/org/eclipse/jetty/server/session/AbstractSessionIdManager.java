@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2004-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.server.session;
 
@@ -32,6 +37,7 @@ public abstract class AbstractSessionIdManager extends AbstractLifeCycle impleme
     protected Random _random;
     protected boolean _weakRandom;
     protected String _workerName;
+    protected long _reseed=100000L;
     
     /* ------------------------------------------------------------ */
     public AbstractSessionIdManager()
@@ -44,6 +50,24 @@ public abstract class AbstractSessionIdManager extends AbstractLifeCycle impleme
         _random=random;
     }
 
+
+    /* ------------------------------------------------------------ */
+    /**
+     * @return the reseed probability
+     */
+    public long getReseed()
+    {
+        return _reseed;
+    }
+
+    /* ------------------------------------------------------------ */
+    /** Set the reseed probability.
+     * @param reseed  If non zero then when a random long modulo the reseed value == 1, the {@link SecureRandom} will be reseeded.
+     */
+    public void setReseed(long reseed)
+    {
+        _reseed = reseed;
+    }
 
     /* ------------------------------------------------------------ */
     /**
@@ -120,6 +144,22 @@ public abstract class AbstractSessionIdManager extends AbstractLifeCycle impleme
                 :_random.nextLong();
                 if (r0<0)
                     r0=-r0;
+
+		// random chance to reseed
+		if (_reseed>0 && (r0%_reseed)== 1L)
+		{
+		    LOG.debug("Reseeding {}",this);
+		    if (_random instanceof SecureRandom)
+		    {
+			SecureRandom secure = (SecureRandom)_random;
+			secure.setSeed(secure.generateSeed(8));
+		    }
+		    else
+		    {
+			_random.setSeed(_random.nextLong()^System.currentTimeMillis()^request.hashCode()^Runtime.getRuntime().freeMemory());
+		    }
+		}
+
                 long r1=_weakRandom
                 ?(hashCode()^Runtime.getRuntime().freeMemory()^_random.nextInt()^(((long)request.hashCode())<<32))
                 :_random.nextLong();

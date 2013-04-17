@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2004-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses.
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.server;
 
@@ -45,6 +50,8 @@ import javax.servlet.ServletInputStream;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletRequestAttributeEvent;
 import javax.servlet.ServletRequestAttributeListener;
+import javax.servlet.ServletRequestEvent;
+import javax.servlet.ServletRequestListener;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -75,6 +82,7 @@ import org.eclipse.jetty.server.handler.ContextHandler.Context;
 import org.eclipse.jetty.util.Attributes;
 import org.eclipse.jetty.util.AttributesMap;
 import org.eclipse.jetty.util.LazyList;
+import org.eclipse.jetty.util.MultiException;
 import org.eclipse.jetty.util.MultiMap;
 import org.eclipse.jetty.util.MultiPartInputStream;
 import org.eclipse.jetty.util.StringUtil;
@@ -118,12 +126,50 @@ import org.eclipse.jetty.util.log.Logger;
 public class Request implements HttpServletRequest
 {
     public static final String __MULTIPART_CONFIG_ELEMENT = "org.eclipse.multipartConfig";
+    public static final String __MULTIPART_INPUT_STREAM = "org.eclipse.multiPartInputStream";
+    public static final String __MULTIPART_CONTEXT = "org.eclipse.multiPartContext";
     private static final Logger LOG = Log.getLogger(Request.class);
 
     private static final String __ASYNC_FWD = "org.eclipse.asyncfwd";
     private static final Collection __defaultLocale = Collections.singleton(Locale.getDefault());
     private static final int __NONE = 0, _STREAM = 1, __READER = 2;
 
+    public static class MultiPartCleanerListener implements ServletRequestListener
+    {
+
+        @Override
+        public void requestDestroyed(ServletRequestEvent sre)
+        {
+            //Clean up any tmp files created by MultiPartInputStream
+            MultiPartInputStream mpis = (MultiPartInputStream)sre.getServletRequest().getAttribute(__MULTIPART_INPUT_STREAM);
+            if (mpis != null)
+            {
+                ContextHandler.Context context = (ContextHandler.Context)sre.getServletRequest().getAttribute(__MULTIPART_CONTEXT);
+
+                //Only do the cleanup if we are exiting from the context in which a servlet parsed the multipart files
+                if (context == sre.getServletContext())
+                {
+                    try
+                    {
+                        mpis.deleteParts();
+                    }
+                    catch (MultiException e)
+                    {
+                        sre.getServletContext().log("Errors deleting multipart tmp files", e);
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void requestInitialized(ServletRequestEvent sre)
+        {
+            //nothing to do, multipart config set up by ServletHolder.handle()
+        }
+        
+    }
+    
+    
     /* ------------------------------------------------------------ */
     public static Request getRequest(HttpServletRequest request)
     {
@@ -266,18 +312,42 @@ public class Request implements HttpServletRequest
                                 maxFormContentSize = _context.getContextHandler().getMaxFormContentSize();
                                 maxFormKeys = _context.getContextHandler().getMaxFormKeys();
                             }
-                            else
+                            
+                            if (maxFormContentSize < 0)
                             {
-                                Number size = (Number)_connection.getConnector().getServer()
-                                        .getAttribute("org.eclipse.jetty.server.Request.maxFormContentSize");
-                                maxFormContentSize = size == null?200000:size.intValue();
-                                Number keys = (Number)_connection.getConnector().getServer().getAttribute("org.eclipse.jetty.server.Request.maxFormKeys");
-                                maxFormKeys = keys == null?1000:keys.intValue();
+                                Object obj = _connection.getConnector().getServer().getAttribute("org.eclipse.jetty.server.Request.maxFormContentSize");
+                                if (obj == null)
+                                    maxFormContentSize = 200000;
+                                else if (obj instanceof Number)
+                                {                      
+                                    Number size = (Number)obj;
+                                    maxFormContentSize = size.intValue();
+                                }
+                                else if (obj instanceof String)
+                                {
+                                    maxFormContentSize = Integer.valueOf((String)obj);
+                                }
+                            }
+                            
+                            if (maxFormKeys < 0)
+                            {
+                                Object obj = _connection.getConnector().getServer().getAttribute("org.eclipse.jetty.server.Request.maxFormKeys");
+                                if (obj == null)
+                                    maxFormKeys = 1000;
+                                else if (obj instanceof Number)
+                                {
+                                    Number keys = (Number)obj;
+                                    maxFormKeys = keys.intValue();
+                                }
+                                else if (obj instanceof String)
+                                {
+                                    maxFormKeys = Integer.valueOf((String)obj);
+                                }
                             }
 
                             if (content_length > maxFormContentSize && maxFormContentSize > 0)
                             {
-                                throw new IllegalStateException("Form too large" + content_length + ">" + maxFormContentSize);
+                                throw new IllegalStateException("Form too large " + content_length + ">" + maxFormContentSize);
                             }
                             InputStream in = getInputStream();
 
@@ -1266,6 +1336,7 @@ public class Request implements HttpServletRequest
             UserIdentity user = ((Authentication.User)_authentication).getUserIdentity();
             return user.getUserPrincipal();
         }
+        
         return null;
     }
 
@@ -1396,6 +1467,7 @@ public class Request implements HttpServletRequest
         if (_attributes != null)
             _attributes.clearAttributes();
         _characterEncoding = null;
+        _contextPath = null;
         if (_cookies != null)
             _cookies.reset();
         _cookiesExtracted = false;
@@ -1756,6 +1828,7 @@ public class Request implements HttpServletRequest
     public void setQueryString(String queryString)
     {
         _queryString = queryString;
+        _queryEncoding = null; //assume utf-8
     }
 
     /* ------------------------------------------------------------ */
@@ -1907,7 +1980,7 @@ public class Request implements HttpServletRequest
     {
         if (!_asyncSupported)
             throw new IllegalStateException("!asyncSupported");
-        _async.suspend();
+        _async.startAsync();
         return _async;
     }
 
@@ -1916,7 +1989,7 @@ public class Request implements HttpServletRequest
     {
         if (!_asyncSupported)
             throw new IllegalStateException("!asyncSupported");
-        _async.suspend(_context,servletRequest,servletResponse);
+        _async.startAsync(_context,servletRequest,servletResponse);
         return _async;
     }
 
@@ -1932,7 +2005,7 @@ public class Request implements HttpServletRequest
     {
         if (_authentication instanceof Authentication.Deferred)
         {
-        	setAuthentication(((Authentication.Deferred)_authentication).authenticate(this,response));
+            setAuthentication(((Authentication.Deferred)_authentication).authenticate(this,response));
             return !(_authentication instanceof Authentication.ResponseSent);        
         }
         response.sendError(HttpStatus.UNAUTHORIZED_401);
@@ -1943,13 +2016,20 @@ public class Request implements HttpServletRequest
     public Part getPart(String name) throws IOException, ServletException
     {        
         if (getContentType() == null || !getContentType().startsWith("multipart/form-data"))
-            return null;
+            throw new ServletException("Content-Type != multipart/form-data");
 
         if (_multiPartInputStream == null)
         { 
+            MultipartConfigElement config = (MultipartConfigElement)getAttribute(__MULTIPART_CONFIG_ELEMENT);
+
+            if (config == null)
+                throw new IllegalStateException("No multipart config for servlet");
+
             _multiPartInputStream = new MultiPartInputStream(getInputStream(), 
-                                                             getContentType(),(MultipartConfigElement)getAttribute(__MULTIPART_CONFIG_ELEMENT), 
+                                                             getContentType(),config, 
                                                              (_context != null?(File)_context.getAttribute("javax.servlet.context.tempdir"):null));
+            setAttribute(__MULTIPART_INPUT_STREAM, _multiPartInputStream);
+            setAttribute(__MULTIPART_CONTEXT, _context);
             Collection<Part> parts = _multiPartInputStream.getParts(); //causes parsing 
             for (Part p:parts)
             {
@@ -1974,13 +2054,21 @@ public class Request implements HttpServletRequest
     public Collection<Part> getParts() throws IOException, ServletException
     {
         if (getContentType() == null || !getContentType().startsWith("multipart/form-data"))
-            return Collections.emptyList();
+            throw new ServletException("Content-Type != multipart/form-data");
         
         if (_multiPartInputStream == null)
         {
+            MultipartConfigElement config = (MultipartConfigElement)getAttribute(__MULTIPART_CONFIG_ELEMENT);
+            
+            if (config == null)
+                throw new IllegalStateException("No multipart config for servlet");
+            
             _multiPartInputStream = new MultiPartInputStream(getInputStream(), 
-                                                             getContentType(),(MultipartConfigElement)getAttribute(__MULTIPART_CONFIG_ELEMENT), 
+                                                             getContentType(), config, 
                                                              (_context != null?(File)_context.getAttribute("javax.servlet.context.tempdir"):null));
+            
+            setAttribute(__MULTIPART_INPUT_STREAM, _multiPartInputStream);
+            setAttribute(__MULTIPART_CONTEXT, _context);
             Collection<Part> parts = _multiPartInputStream.getParts(); //causes parsing 
             for (Part p:parts)
             {
@@ -2006,7 +2094,7 @@ public class Request implements HttpServletRequest
     {
         if (_authentication instanceof Authentication.Deferred) 
         {
-            _authentication=((Authentication.Deferred)_authentication).login(username,password);
+            _authentication=((Authentication.Deferred)_authentication).login(username,password,this);
             if (_authentication == null)
                 throw new ServletException();
         } 
@@ -2036,7 +2124,7 @@ public class Request implements HttpServletRequest
     {
         // extract parameters from dispatch query
         MultiMap<String> parameters = new MultiMap<String>();
-        UrlEncoded.decodeTo(query,parameters,getCharacterEncoding());
+        UrlEncoded.decodeTo(query,parameters, StringUtil.__UTF8); //have to assume UTF-8 because we can't know otherwise
 
         boolean merge_old_query = false;
 
@@ -2071,10 +2159,11 @@ public class Request implements HttpServletRequest
             {
                 StringBuilder overridden_query_string = new StringBuilder();
                 MultiMap<String> overridden_old_query = new MultiMap<String>();
-                UrlEncoded.decodeTo(_queryString,overridden_old_query,getCharacterEncoding());
-
+                UrlEncoded.decodeTo(_queryString,overridden_old_query,getQueryEncoding());//decode using any queryencoding set for the request
+                
+                
                 MultiMap<String> overridden_new_query = new MultiMap<String>();
-                UrlEncoded.decodeTo(query,overridden_new_query,getCharacterEncoding());
+                UrlEncoded.decodeTo(query,overridden_new_query,StringUtil.__UTF8); //have to assume utf8 as we cannot know otherwise
 
                 Iterator<Entry<String, Object>> iter = overridden_old_query.entrySet().iterator();
                 while (iter.hasNext())

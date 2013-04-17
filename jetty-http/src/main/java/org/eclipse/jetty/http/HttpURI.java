@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2006-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses.
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.http;
 
@@ -89,7 +94,15 @@ public class HttpURI
     public HttpURI(String raw)
     {
         _rawString=raw;
-        byte[] b = raw.getBytes();
+        byte[] b;
+        try
+        {
+            b = raw.getBytes(StringUtil.__UTF8);
+        }
+        catch (UnsupportedEncodingException e)
+        {
+           throw new RuntimeException(e.getMessage());
+        }
         parse(b,0,b.length);
     }
 
@@ -125,7 +138,6 @@ public class HttpURI
         int i=offset;
         int e=offset+length;
         int state=AUTH;
-        int m=offset;
         _end=offset+length;
         _scheme=offset;
         _authority=offset;
@@ -546,6 +558,63 @@ public class HttpURI
             return null;
 
         int length = _param-_path;
+        boolean decoding=false;
+
+        for (int i=_path;i<_param;i++)
+        {
+            byte b = _raw[i];
+
+            if (b=='%')
+            {
+                if (!decoding)
+                {
+                    _utf8b.reset();
+                    _utf8b.append(_raw,_path,i-_path);
+                    decoding=true;
+                }
+                
+                if ((i+2)>=_param)
+                    throw new IllegalArgumentException("Bad % encoding: "+this);
+                if (_raw[i+1]=='u')
+                {
+                    if ((i+5)>=_param)
+                        throw new IllegalArgumentException("Bad %u encoding: "+this);
+                    try
+                    {
+                        String unicode = new String(Character.toChars(TypeUtil.parseInt(_raw,i+2,4,16)));
+                        _utf8b.getStringBuilder().append(unicode);
+                        i+=5;
+                    }
+                    catch(Exception e)
+                    {
+                        throw new RuntimeException(e);
+                    }
+                }
+                else
+                {
+                    b=(byte)(0xff&TypeUtil.parseInt(_raw,i+1,2,16));
+                    _utf8b.append(b);
+                    i+=2;
+                }
+                continue;
+            }
+            else if (decoding)
+            {
+                _utf8b.append(b);
+            }
+        }
+
+        if (!decoding)
+            return toUtf8String(_path,length);
+        return _utf8b.toString();
+    }
+    
+    public String getDecodedPath(String encoding)
+    {
+        if (_path==_param)
+            return null;
+
+        int length = _param-_path;
         byte[] bytes=null;
         int n=0;
 
@@ -555,10 +624,39 @@ public class HttpURI
 
             if (b=='%')
             {
+                if (bytes==null)
+                {
+                    bytes=new byte[length];
+                    System.arraycopy(_raw,_path,bytes,0,n);
+                }
+                
                 if ((i+2)>=_param)
                     throw new IllegalArgumentException("Bad % encoding: "+this);
-                b=(byte)(0xff&TypeUtil.parseInt(_raw,i+1,2,16));
-                i+=2;
+                if (_raw[i+1]=='u')
+                {
+                    if ((i+5)>=_param)
+                        throw new IllegalArgumentException("Bad %u encoding: "+this);
+
+                    try
+                    {
+                        String unicode = new String(Character.toChars(TypeUtil.parseInt(_raw,i+2,4,16)));
+                        byte[] encoded = unicode.getBytes(encoding);
+                        System.arraycopy(encoded,0,bytes,n,encoded.length);
+                        n+=encoded.length;
+                        i+=5;
+                    }
+                    catch(Exception e)
+                    {
+                        throw new RuntimeException(e);
+                    }
+                }
+                else
+                {
+                    b=(byte)(0xff&TypeUtil.parseInt(_raw,i+1,2,16));
+                    bytes[n++]=b;
+                    i+=2;
+                }
+                continue;
             }
             else if (bytes==null)
             {
@@ -566,22 +664,21 @@ public class HttpURI
                 continue;
             }
 
-            if (bytes==null)
-            {
-                bytes=new byte[length];
-                System.arraycopy(_raw,_path,bytes,0,n);
-            }
-
             bytes[n++]=b;
         }
 
-        if (bytes==null)
-            return toUtf8String(_path,length);
 
-        _utf8b.reset();
-        _utf8b.append(bytes,0,n);
-        return _utf8b.toString();
+        if (bytes==null)
+            return StringUtil.toString(_raw,_path,_param-_path,encoding);
+
+        return StringUtil.toString(bytes,0,n,encoding);
     }
+    
+    
+    
+    
+    
+
 
     public String getPathAndParam()
     {
@@ -647,7 +744,7 @@ public class HttpURI
         if (encoding==null || StringUtil.isUTF8(encoding))
             UrlEncoded.decodeUtf8To(_raw,_query+1,_fragment-_query-1,parameters);
         else
-            UrlEncoded.decodeTo(toUtf8String(_query+1,_fragment-_query-1),parameters,encoding);
+            UrlEncoded.decodeTo(StringUtil.toString(_raw,_query+1,_fragment-_query-1,encoding),parameters,encoding);
     }
 
     public void clear()

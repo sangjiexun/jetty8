@@ -1,18 +1,21 @@
-/*******************************************************************************
- * Copyright (c) 2011 Intalio, Inc.
- * ======================================================================
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * and Apache License v2.0 which accompanies this distribution.
- *
- *   The Eclipse Public License is available at
- *   http://www.eclipse.org/legal/epl-v10.html
- *
- *   The Apache License v2.0 is available at
- *   http://www.opensource.org/licenses/apache2.0.php
- *
- * You may elect to redistribute this code under either of these licenses.
- *******************************************************************************/
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
+
 package org.eclipse.jetty.websocket;
 
 import static org.hamcrest.Matchers.*;
@@ -1334,7 +1337,7 @@ public class WebSocketMessageRFC6455Test
         output.flush();
 
         // Make sure the read times out if there are problems with the implementation
-        socket.setSoTimeout(1000);
+        socket.setSoTimeout(10000);
 
         InputStream input = socket.getInputStream();
 
@@ -1344,7 +1347,7 @@ public class WebSocketMessageRFC6455Test
         skipTo("\r\n\r\n",input);
 
 
-        assertTrue(__serverWebSocket.awaitConnected(1000));
+        assertTrue(__serverWebSocket.awaitConnected(10000));
         assertNotNull(__serverWebSocket.connection);
 
         assertEquals(0x81,input.read());
@@ -1352,7 +1355,7 @@ public class WebSocketMessageRFC6455Test
         lookFor("sent on connect",input);
         socket.close();
 
-        assertTrue(__serverWebSocket.awaitDisconnected(500));
+        assertTrue(__serverWebSocket.awaitDisconnected(10000));
 
         try
         {

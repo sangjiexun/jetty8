@@ -1,18 +1,21 @@
-/*******************************************************************************
- * Copyright (c) 2011 Intalio, Inc.
- * ======================================================================
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * and Apache License v2.0 which accompanies this distribution.
- *
- *   The Eclipse Public License is available at
- *   http://www.eclipse.org/legal/epl-v10.html
- *
- *   The Apache License v2.0 is available at
- *   http://www.opensource.org/licenses/apache2.0.php
- *
- * You may elect to redistribute this code under either of these licenses.
- *******************************************************************************/
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
+
 package org.eclipse.jetty.websocket;
 
 import static org.hamcrest.Matchers.*;
@@ -59,7 +62,9 @@ public class SafariWebsocketDraft0Test
 
         // Serve capture servlet
         servlet = new WebSocketCaptureServlet();
-        context.addServlet(new ServletHolder(servlet),"/");
+        ServletHolder holder = new ServletHolder(servlet);
+        holder.setInitParameter("minVersion","-1");
+        context.addServlet(holder,"/");
 
         // Start Server
         server.start();

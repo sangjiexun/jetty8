@@ -1,21 +1,27 @@
-// ========================================================================
-// Copyright (c) 2008-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.security.authentication;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.Locale;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -77,6 +83,7 @@ public class FormAuthenticator extends LoginAuthenticator
     private String _formLoginPage;
     private String _formLoginPath;
     private boolean _dispatch;
+    private boolean _alwaysSaveUri;
 
     public FormAuthenticator()
     {
@@ -91,6 +98,26 @@ public class FormAuthenticator extends LoginAuthenticator
         if (error!=null)
             setErrorPage(error);
         _dispatch=dispatch;
+    }
+    
+    /* ------------------------------------------------------------ */
+    /**
+     * If true, uris that cause a redirect to a login page will always
+     * be remembered. If false, only the first uri that leads to a login
+     * page redirect is remembered.
+     * See https://bugs.eclipse.org/bugs/show_bug.cgi?id=379909
+     * @param alwaysSave
+     */
+    public void setAlwaysSaveUri (boolean alwaysSave)
+    {
+        _alwaysSaveUri = alwaysSave;
+    }
+    
+    
+    /* ------------------------------------------------------------ */
+    public boolean getAlwaysSaveUri ()
+    {
+        return _alwaysSaveUri;
     }
     
     /* ------------------------------------------------------------ */
@@ -153,6 +180,22 @@ public class FormAuthenticator extends LoginAuthenticator
                 _formErrorPath = _formErrorPath.substring(0, _formErrorPath.indexOf('?'));
         }
     }
+    
+    
+    /* ------------------------------------------------------------ */
+    @Override
+    public UserIdentity login(String username, Object password, ServletRequest request)
+    {
+        
+        UserIdentity user = super.login(username,password,request);
+        if (user!=null)
+        {
+            HttpSession session = ((HttpServletRequest)request).getSession(true);
+            Authentication cached=new SessionAuthentication(getAuthMethod(),user,password);
+            session.setAttribute(SessionAuthentication.__J_AUTHENTICATED, cached);
+        }
+        return user;
+    }
 
     /* ------------------------------------------------------------ */
     public Authentication validateRequest(ServletRequest req, ServletResponse res, boolean mandatory) throws ServerAuthException
@@ -165,11 +208,11 @@ public class FormAuthenticator extends LoginAuthenticator
 
         mandatory|=isJSecurityCheck(uri);
         if (!mandatory)
-            return _deferred;
-        
-        if (isLoginOrErrorPage(URIUtil.addPaths(request.getServletPath(),request.getPathInfo())))
-            return Authentication.NOT_CHECKED;
-            
+            return new DeferredAuthentication(this);
+
+        if (isLoginOrErrorPage(URIUtil.addPaths(request.getServletPath(),request.getPathInfo())) &&!DeferredAuthentication.isDeferred(response))
+            return new DeferredAuthentication(this);
+
         HttpSession session = request.getSession(true);
             
         try
@@ -180,29 +223,26 @@ public class FormAuthenticator extends LoginAuthenticator
                 final String username = request.getParameter(__J_USERNAME);
                 final String password = request.getParameter(__J_PASSWORD);
                 
-                UserIdentity user = _loginService.login(username,password);
+                UserIdentity user = login(username, password, request);
+                session = request.getSession(true);
                 if (user!=null)
-                {
-                    session=renewSessionOnAuthentication(request,response);
-                    
+                {                    
                     // Redirect to original request
                     String nuri;
                     synchronized(session)
                     {
                         nuri = (String) session.getAttribute(__J_URI);
-                    }
-                    
-                    if (nuri == null || nuri.length() == 0)
-                    {
-                        nuri = request.getContextPath();
-                        if (nuri.length() == 0) 
-                            nuri = URIUtil.SLASH;
+
+                        if (nuri == null || nuri.length() == 0)
+                        {
+                            nuri = request.getContextPath();
+                            if (nuri.length() == 0) 
+                                nuri = URIUtil.SLASH;
+                        }
                     }
                     response.setContentLength(0);   
                     response.sendRedirect(response.encodeRedirectURL(nuri));
-
-                    Authentication cached=new SessionAuthentication(getAuthMethod(),user,password);
-                    session.setAttribute(SessionAuthentication.__J_AUTHENTICATED, cached);
+                    
                     return new FormAuthentication(getAuthMethod(),user);
                 }
                 
@@ -273,15 +313,18 @@ public class FormAuthenticator extends LoginAuthenticator
             }
 
             // if we can't send challenge
-            if (_deferred.isDeferred(response))
-                return Authentication.UNAUTHENTICATED; 
-            
+            if (DeferredAuthentication.isDeferred(response))
+            {
+                LOG.debug("auth deferred {}",session.getId());
+                return Authentication.UNAUTHENTICATED;
+            }
+
             // remember the current URI
             synchronized (session)
             {
-                // But only if it is not set already
-                if (session.getAttribute(__J_URI)==null)
-                {
+                // But only if it is not set already, or we save every uri that leads to a login form redirect
+                if (session.getAttribute(__J_URI)==null || _alwaysSaveUri)
+                {  
                     StringBuffer buf = request.getRequestURL();
                     if (request.getQueryString() != null)
                         buf.append("?").append(request.getQueryString());
@@ -360,7 +403,7 @@ public class FormAuthenticator extends LoginAuthenticator
         @Override
         public long getDateHeader(String name)
         {
-            if (name.toLowerCase().startsWith("if-"))
+            if (name.toLowerCase(Locale.ENGLISH).startsWith("if-"))
                 return -1;
             return super.getDateHeader(name);
         }
@@ -368,7 +411,7 @@ public class FormAuthenticator extends LoginAuthenticator
         @Override
         public String getHeader(String name)
         {
-            if (name.toLowerCase().startsWith("if-"))
+            if (name.toLowerCase(Locale.ENGLISH).startsWith("if-"))
                 return null;
             return super.getHeader(name);
         }
@@ -382,7 +425,7 @@ public class FormAuthenticator extends LoginAuthenticator
         @Override
         public Enumeration getHeaders(String name)
         {
-            if (name.toLowerCase().startsWith("if-"))
+            if (name.toLowerCase(Locale.ENGLISH).startsWith("if-"))
                 return Collections.enumeration(Collections.EMPTY_LIST);
             return super.getHeaders(name);
         }

@@ -1,18 +1,21 @@
-/*
- * Copyright (c) 2012 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
+
 
 package org.eclipse.jetty.spdy.http;
 
@@ -42,15 +45,17 @@ public class ServerHTTPSPDYAsyncConnectionFactory extends ServerSPDYAsyncConnect
     private static final Logger logger = Log.getLogger(ServerHTTPSPDYAsyncConnectionFactory.class);
 
     private final Connector connector;
+    private final PushStrategy pushStrategy;
 
-    public ServerHTTPSPDYAsyncConnectionFactory(short version, ByteBufferPool bufferPool, Executor threadPool, ScheduledExecutorService scheduler, Connector connector)
+    public ServerHTTPSPDYAsyncConnectionFactory(short version, ByteBufferPool bufferPool, Executor threadPool, ScheduledExecutorService scheduler, Connector connector, PushStrategy pushStrategy)
     {
         super(version, bufferPool, threadPool, scheduler);
         this.connector = connector;
+        this.pushStrategy = pushStrategy;
     }
 
     @Override
-    protected ServerSessionFrameListener newServerSessionFrameListener(AsyncEndPoint endPoint, Object attachment)
+    protected ServerSessionFrameListener provideServerSessionFrameListener(AsyncEndPoint endPoint, Object attachment)
     {
         return new HTTPServerFrameListener(endPoint);
     }
@@ -76,14 +81,14 @@ public class ServerHTTPSPDYAsyncConnectionFactory extends ServerSPDYAsyncConnect
             logger.debug("Received {} on {}", synInfo, stream);
 
             HTTPSPDYAsyncEndPoint asyncEndPoint = new HTTPSPDYAsyncEndPoint(endPoint, stream);
-            ServerHTTPSPDYAsyncConnection connection = new ServerHTTPSPDYAsyncConnection(connector,
-                    asyncEndPoint, connector.getServer(),
-                    (SPDYAsyncConnection)endPoint.getConnection(), stream);
+            ServerHTTPSPDYAsyncConnection connection = new ServerHTTPSPDYAsyncConnection(connector, asyncEndPoint,
+                    connector.getServer(), getVersion(), (SPDYAsyncConnection)endPoint.getConnection(),
+                    pushStrategy, stream);
             asyncEndPoint.setConnection(connection);
             stream.setAttribute(CONNECTION_ATTRIBUTE, connection);
 
             Headers headers = synInfo.getHeaders();
-            connection.beginRequest(headers);
+            connection.beginRequest(headers, synInfo.isClose());
 
             if (headers.isEmpty())
             {
@@ -93,14 +98,9 @@ public class ServerHTTPSPDYAsyncConnectionFactory extends ServerSPDYAsyncConnect
             else
             {
                 if (synInfo.isClose())
-                {
-                    connection.endRequest();
                     return null;
-                }
                 else
-                {
                     return this;
-                }
             }
         }
 

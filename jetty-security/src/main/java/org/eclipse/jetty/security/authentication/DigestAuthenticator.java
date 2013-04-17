@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2008-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.security.authentication;
 
@@ -111,13 +116,15 @@ public class DigestAuthenticator extends LoginAuthenticator
     {
         return true;
     }
+    
+
 
     /* ------------------------------------------------------------ */
     public Authentication validateRequest(ServletRequest req, ServletResponse res, boolean mandatory) throws ServerAuthException
     {
         if (!mandatory)
-            return _deferred;
-        
+            return new DeferredAuthentication(this);
+
         HttpServletRequest request = (HttpServletRequest)req;
         HttpServletResponse response = (HttpServletResponse)res;
         String credentials = request.getHeader(HttpHeaders.AUTHORIZATION);
@@ -180,10 +187,10 @@ public class DigestAuthenticator extends LoginAuthenticator
 
                 if (n > 0)
                 {
-                    UserIdentity user = _loginService.login(digest.username,digest);
+                    //UserIdentity user = _loginService.login(digest.username,digest);
+                    UserIdentity user = login(digest.username, digest, req);
                     if (user!=null)
                     {
-                        renewSessionOnAuthentication(request,response);
                         return new UserAuthentication(getAuthMethod(),user);
                     }
                 }
@@ -192,7 +199,7 @@ public class DigestAuthenticator extends LoginAuthenticator
 
             }
 
-            if (!_deferred.isDeferred(response))
+            if (!DeferredAuthentication.isDeferred(response))
             {
                 String domain = request.getContextPath();
                 if (domain == null) 

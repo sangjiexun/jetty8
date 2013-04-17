@@ -1,15 +1,21 @@
-// ========================================================================
-// Copyright (c) 2006-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses.
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
+
 package org.eclipse.jetty.rewrite.handler;
 
 import java.io.IOException;
@@ -71,6 +77,20 @@ public class RewriteHandlerTest extends AbstractRuleTestCase
     @Test
     public void test() throws Exception
     {
+        _response.setStatus(200);
+        _request.setHandled(false);
+        _handler.setOriginalPathAttribute("/before");
+        _handler.setRewriteRequestURI(true);
+        _handler.setRewritePathInfo(true);
+        _request.setRequestURI("/xxx/bar");
+        _request.setPathInfo("/xxx/bar");
+        _handler.handle("/xxx/bar",_request,_request, _response);
+        assertEquals(201,_response.getStatus());
+        assertEquals("/bar/zzz",_request.getAttribute("target"));
+        assertEquals("/bar/zzz",_request.getAttribute("URI"));
+        assertEquals("/bar/zzz",_request.getAttribute("info"));
+        assertEquals(null,_request.getAttribute("before"));
+        
         _response.setStatus(200);
         _request.setHandled(false);
         _handler.setOriginalPathAttribute("/before");

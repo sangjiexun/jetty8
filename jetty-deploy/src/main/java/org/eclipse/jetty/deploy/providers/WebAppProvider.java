@@ -1,9 +1,28 @@
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
+
 package org.eclipse.jetty.deploy.providers;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.util.Locale;
 
 import org.eclipse.jetty.deploy.App;
 import org.eclipse.jetty.deploy.util.FileID;
@@ -41,7 +60,7 @@ public class WebAppProvider extends ScanningAppProvider
             {
                 return false;
             }
-            String lowername = name.toLowerCase();
+            String lowername = name.toLowerCase(Locale.ENGLISH);
             
             File file = new File(dir,name);
             // is it not a directory and not a war ?
@@ -261,9 +280,9 @@ public class WebAppProvider extends ScanningAppProvider
         {
             context = URIUtil.SLASH;
         }
-        else if (context.toLowerCase().startsWith("root-"))
+        else if (context.toLowerCase(Locale.ENGLISH).startsWith("root-"))
         {
-            int dash=context.toLowerCase().indexOf('-');
+            int dash=context.toLowerCase(Locale.ENGLISH).indexOf('-');
             String virtual = context.substring(dash+1);
             wah.setVirtualHosts(new String[]{virtual});
             context = URIUtil.SLASH;

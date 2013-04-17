@@ -1,20 +1,27 @@
-// ========================================================================
-// Copyright (c) 2006-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.client;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+
+import java.util.Locale;
 
 import org.eclipse.jetty.client.helperClasses.ServerAndClientCreator;
 import org.eclipse.jetty.client.helperClasses.SslServerAndClientCreator;
@@ -46,7 +53,7 @@ public class SslHttpExchangeTest extends HttpExchangeTest
     {
         // Use Junit 4.x to flag test as ignored if encountering IBM JVM
         // Will show up in various junit reports as an ignored test as well.
-        Assume.assumeThat(System.getProperty("java.vendor").toLowerCase(),not(containsString("ibm")));
+        Assume.assumeThat(System.getProperty("java.vendor").toLowerCase(Locale.ENGLISH),not(containsString("ibm")));
     }
 
     /* ------------------------------------------------------------ */

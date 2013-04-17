@@ -1,16 +1,20 @@
-// ========================================================================
-// $Id$
-// Copyright (c) 2006-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses.
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.server.handler;
 
@@ -292,6 +296,34 @@ public class ContextHandlerTest
         assertEquals("333",handler.getServletContext().getAttribute("ccc"));
         assertEquals(null,handler.getServletContext().getAttribute("ddd"));
     }
+    
+    @Test
+    public void testProtected() throws Exception
+    {
+        ContextHandler handler = new ContextHandler();
+        String[] protectedTargets = {"/foo-inf", "/bar-inf"};
+        handler.setProtectedTargets(protectedTargets);
+        
+        assertTrue(handler.isProtectedTarget("/foo-inf/x/y/z"));
+        assertFalse(handler.isProtectedTarget("/foo/x/y/z"));
+        assertTrue(handler.isProtectedTarget("/foo-inf?x=y&z=1"));
+        
+        protectedTargets = new String[4];
+        System.arraycopy(handler.getProtectedTargets(), 0, protectedTargets, 0, 2);
+        protectedTargets[2] = "/abc";
+        protectedTargets[3] = "/def";
+        handler.setProtectedTargets(protectedTargets);
+        
+        assertTrue(handler.isProtectedTarget("/foo-inf/x/y/z"));
+        assertFalse(handler.isProtectedTarget("/foo/x/y/z"));
+        assertTrue(handler.isProtectedTarget("/foo-inf?x=y&z=1"));
+        assertTrue(handler.isProtectedTarget("/abc/124"));
+        assertTrue(handler.isProtectedTarget("//def"));
+       
+        assertTrue(handler.isProtectedTarget("/ABC/7777"));
+    }
+    
+    
 
     private void checkResourcePathsForExampleWebApp(String root) throws IOException
     {

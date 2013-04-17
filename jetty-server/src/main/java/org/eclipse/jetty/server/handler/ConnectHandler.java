@@ -1,7 +1,27 @@
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
+
 package org.eclipse.jetty.server.handler;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
@@ -10,7 +30,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -45,8 +64,6 @@ import org.eclipse.jetty.util.thread.ThreadPool;
 public class ConnectHandler extends HandlerWrapper
 {
     private static final Logger LOG = Log.getLogger(ConnectHandler.class);
-
-    private final Logger _logger = Log.getLogger(getClass().getName());
     private final SelectorManager _selectorManager = new Manager();
     private volatile int _connectTimeout = 5000;
     private volatile int _writeTimeout = 30000;
@@ -174,15 +191,15 @@ public class ConnectHandler extends HandlerWrapper
     {
         if (HttpMethods.CONNECT.equalsIgnoreCase(request.getMethod()))
         {
-            _logger.debug("CONNECT request for {}", request.getRequestURI());
+            LOG.debug("CONNECT request for {}", request.getRequestURI());
             try
             {
                 handleConnect(baseRequest, request, response, request.getRequestURI());
             }
             catch(Exception e)
             {
-                _logger.warn("ConnectHandler "+baseRequest.getUri()+" "+ e);
-                _logger.debug(e);
+                LOG.warn("ConnectHandler "+baseRequest.getUri()+" "+ e);
+                LOG.debug(e);
             }
         }
         else
@@ -226,7 +243,33 @@ public class ConnectHandler extends HandlerWrapper
             return;
         }
 
-        SocketChannel channel = connectToServer(request, host, port);
+        SocketChannel channel;
+
+        try
+        {
+            channel = connectToServer(request,host,port);
+        }
+        catch (SocketException se)
+        {
+            LOG.info("ConnectHandler: SocketException " + se.getMessage());
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            baseRequest.setHandled(true);
+            return;
+        }
+        catch (SocketTimeoutException ste)
+        {
+            LOG.info("ConnectHandler: SocketTimeoutException" + ste.getMessage());
+            response.setStatus(HttpServletResponse.SC_GATEWAY_TIMEOUT);
+            baseRequest.setHandled(true);
+            return;
+        }
+        catch (IOException ioe)
+        {
+            LOG.info("ConnectHandler: IOException" + ioe.getMessage());
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            baseRequest.setHandled(true);
+            return;
+        }
 
         // Transfer unread data from old connection to new connection
         // We need to copy the data to avoid races:
@@ -307,9 +350,10 @@ public class ConnectHandler extends HandlerWrapper
         return new ProxyToServerConnection(context, buffer);
     }
 
+    // may return null
     private SocketChannel connectToServer(HttpServletRequest request, String host, int port) throws IOException
     {
-        SocketChannel channel = connect(request, host, port);
+        SocketChannel channel = connect(request, host, port);      
         channel.configureBlocking(false);
         return channel;
     }
@@ -326,18 +370,24 @@ public class ConnectHandler extends HandlerWrapper
     protected SocketChannel connect(HttpServletRequest request, String host, int port) throws IOException
     {
         SocketChannel channel = SocketChannel.open();
+
+        if (channel == null)
+        {
+            throw new IOException("unable to connect to " + host + ":" + port);
+        }
+
         try
         {
             // Connect to remote server
-            _logger.debug("Establishing connection to {}:{}", host, port);
+            LOG.debug("Establishing connection to {}:{}", host, port);
             channel.socket().setTcpNoDelay(true);
             channel.socket().connect(new InetSocketAddress(host, port), getConnectTimeout());
-            _logger.debug("Established connection to {}:{}", host, port);
+            LOG.debug("Established connection to {}:{}", host, port);
             return channel;
         }
         catch (IOException x)
         {
-            _logger.debug("Failed to establish connection to " + host + ":" + port, x);
+            LOG.debug("Failed to establish connection to " + host + ":" + port, x);
             try
             {
                 channel.close();
@@ -360,7 +410,7 @@ public class ConnectHandler extends HandlerWrapper
         // so that Jetty understands that it has to upgrade the connection
         request.setAttribute("org.eclipse.jetty.io.Connection", connection);
         response.setStatus(HttpServletResponse.SC_SWITCHING_PROTOCOLS);
-        _logger.debug("Upgraded connection to {}", connection);
+        LOG.debug("Upgraded connection to {}", connection);
     }
 
     private void register(SocketChannel channel, ProxyToServerConnection proxyToServer) throws IOException
@@ -399,24 +449,27 @@ public class ConnectHandler extends HandlerWrapper
             return 0;
 
         int length = buffer.length();
-        StringBuilder builder = new StringBuilder();
-        int written = endPoint.flush(buffer);
-        builder.append(written);
-        buffer.compact();
-        if (!endPoint.isBlocking())
+        final StringBuilder debug = LOG.isDebugEnabled()?new StringBuilder():null;
+        int flushed = endPoint.flush(buffer);
+        if (debug!=null)
+            debug.append(flushed);
+        
+        // Loop until all written
+        while (buffer.length()>0 && !endPoint.isOutputShutdown())
         {
-            while (buffer.space() == 0)
+            if (!endPoint.isBlocking())
             {
                 boolean ready = endPoint.blockWritable(getWriteTimeout());
                 if (!ready)
                     throw new IOException("Write timeout");
-
-                written = endPoint.flush(buffer);
-                builder.append("+").append(written);
-                buffer.compact();
             }
+            flushed = endPoint.flush(buffer);
+            if (debug!=null)
+                debug.append("+").append(flushed);
         }
-        _logger.debug("Written {}/{} bytes {}", builder, length, endPoint);
+       
+        LOG.debug("Written {}/{} bytes {}", debug, length, endPoint);
+        buffer.compact();
         return length;
     }
 
@@ -464,12 +517,12 @@ public class ConnectHandler extends HandlerWrapper
         }
     }
 
-    
-    
+
+
     public class ProxyToServerConnection implements AsyncConnection
     {
         private final CountDownLatch _ready = new CountDownLatch(1);
-        private final Buffer _buffer = new IndirectNIOBuffer(1024);
+        private final Buffer _buffer = new IndirectNIOBuffer(4096);
         private final ConcurrentMap<String, Object> _context;
         private volatile Buffer _data;
         private volatile ClientToProxyConnection _toClient;
@@ -493,7 +546,7 @@ public class ConnectHandler extends HandlerWrapper
 
         public Connection handle() throws IOException
         {
-            _logger.debug("{}: begin reading from server", this);
+            LOG.debug("{}: begin reading from server", this);
             try
             {
                 writeData();
@@ -504,7 +557,7 @@ public class ConnectHandler extends HandlerWrapper
 
                     if (read == -1)
                     {
-                        _logger.debug("{}: server closed connection {}", this, _endPoint);
+                        LOG.debug("{}: server closed connection {}", this, _endPoint);
 
                         if (_endPoint.isOutputShutdown() || !_endPoint.isOpen())
                             closeClient();
@@ -517,32 +570,32 @@ public class ConnectHandler extends HandlerWrapper
                     if (read == 0)
                         break;
 
-                    _logger.debug("{}: read from server {} bytes {}", this, read, _endPoint);
+                    LOG.debug("{}: read from server {} bytes {}", this, read, _endPoint);
                     int written = write(_toClient._endPoint, _buffer, _context);
-                    _logger.debug("{}: written to {} {} bytes", this, _toClient, written);
+                    LOG.debug("{}: written to {} {} bytes", this, _toClient, written);
                 }
                 return this;
             }
             catch (ClosedChannelException x)
             {
-                _logger.debug(x);
+                LOG.debug(x);
                 throw x;
             }
             catch (IOException x)
             {
-                _logger.warn(this + ": unexpected exception", x);
+                LOG.warn(this + ": unexpected exception", x);
                 close();
                 throw x;
             }
             catch (RuntimeException x)
             {
-                _logger.warn(this + ": unexpected exception", x);
+                LOG.warn(this + ": unexpected exception", x);
                 close();
                 throw x;
             }
             finally
             {
-                _logger.debug("{}: end reading from server", this);
+                LOG.debug("{}: end reading from server", this);
             }
         }
 
@@ -550,7 +603,7 @@ public class ConnectHandler extends HandlerWrapper
         {
             // TODO
         }
-        
+
         private void writeData() throws IOException
         {
             // This method is called from handle() and closeServer()
@@ -563,7 +616,7 @@ public class ConnectHandler extends HandlerWrapper
                     try
                     {
                         int written = write(_endPoint, _data, _context);
-                        _logger.debug("{}: written to server {} bytes", this, written);
+                        LOG.debug("{}: written to server {} bytes", this, written);
                     }
                     finally
                     {
@@ -648,7 +701,7 @@ public class ConnectHandler extends HandlerWrapper
             }
             catch (IOException x)
             {
-                _logger.debug(this + ": unexpected exception closing the client", x);
+                LOG.debug(this + ": unexpected exception closing the client", x);
             }
 
             try
@@ -657,7 +710,7 @@ public class ConnectHandler extends HandlerWrapper
             }
             catch (IOException x)
             {
-                _logger.debug(this + ": unexpected exception closing the server", x);
+                LOG.debug(this + ": unexpected exception closing the server", x);
             }
         }
 
@@ -683,7 +736,7 @@ public class ConnectHandler extends HandlerWrapper
 
     public class ClientToProxyConnection implements AsyncConnection
     {
-        private final Buffer _buffer = new IndirectNIOBuffer(1024);
+        private final Buffer _buffer = new IndirectNIOBuffer(4096);
         private final ConcurrentMap<String, Object> _context;
         private final SocketChannel _channel;
         private final EndPoint _endPoint;
@@ -710,14 +763,14 @@ public class ConnectHandler extends HandlerWrapper
 
         public Connection handle() throws IOException
         {
-            _logger.debug("{}: begin reading from client", this);
+            LOG.debug("{}: begin reading from client", this);
             try
             {
                 if (_firstTime)
                 {
                     _firstTime = false;
                     register(_channel, _toServer);
-                    _logger.debug("{}: registered channel {} with connection {}", this, _channel, _toServer);
+                    LOG.debug("{}: registered channel {} with connection {}", this, _channel, _toServer);
                 }
 
                 while (true)
@@ -726,7 +779,7 @@ public class ConnectHandler extends HandlerWrapper
 
                     if (read == -1)
                     {
-                        _logger.debug("{}: client closed connection {}", this, _endPoint);
+                        LOG.debug("{}: client closed connection {}", this, _endPoint);
 
                         if (_endPoint.isOutputShutdown() || !_endPoint.isOpen())
                             closeServer();
@@ -739,36 +792,36 @@ public class ConnectHandler extends HandlerWrapper
                     if (read == 0)
                         break;
 
-                    _logger.debug("{}: read from client {} bytes {}", this, read, _endPoint);
+                    LOG.debug("{}: read from client {} bytes {}", this, read, _endPoint);
                     int written = write(_toServer._endPoint, _buffer, _context);
-                    _logger.debug("{}: written to {} {} bytes", this, _toServer, written);
+                    LOG.debug("{}: written to {} {} bytes", this, _toServer, written);
                 }
                 return this;
             }
             catch (ClosedChannelException x)
             {
-                _logger.debug(x);
+                LOG.debug(x);
                 closeServer();
                 throw x;
             }
             catch (IOException x)
             {
-                _logger.warn(this + ": unexpected exception", x);
+                LOG.warn(this + ": unexpected exception", x);
                 close();
                 throw x;
             }
             catch (RuntimeException x)
             {
-                _logger.warn(this + ": unexpected exception", x);
+                LOG.warn(this + ": unexpected exception", x);
                 close();
                 throw x;
             }
             finally
             {
-                _logger.debug("{}: end reading from client", this);
+                LOG.debug("{}: end reading from client", this);
             }
         }
-        
+
         public void onInputShutdown() throws IOException
         {
             // TODO
@@ -816,7 +869,7 @@ public class ConnectHandler extends HandlerWrapper
             }
             catch (IOException x)
             {
-                _logger.debug(this + ": unexpected exception closing the client", x);
+                LOG.debug(this + ": unexpected exception closing the client", x);
             }
 
             try
@@ -825,7 +878,7 @@ public class ConnectHandler extends HandlerWrapper
             }
             catch (IOException x)
             {
-                _logger.debug(this + ": unexpected exception closing the server", x);
+                LOG.debug(this + ": unexpected exception closing the server", x);
             }
         }
 

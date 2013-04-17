@@ -1,3 +1,21 @@
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
+
 package org.eclipse.jetty.io.nio;
 
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -5,6 +23,7 @@ import static org.hamcrest.Matchers.greaterThan;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedInputStream;
@@ -24,6 +43,7 @@ import org.eclipse.jetty.io.AsyncEndPoint;
 import org.eclipse.jetty.io.ConnectedEndPoint;
 import org.eclipse.jetty.io.EndPoint;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -360,17 +380,17 @@ public class SelectChannelEndPointTest
         int b=client.getInputStream().read();
         assertEquals(-1,b);
         long idle=System.currentTimeMillis()-start;
-        assertTrue(idle>400);
-        assertTrue(idle<2000);
+        assertThat(idle,Matchers.greaterThan(400L));
+        assertThat(idle,Matchers.lessThan(3000L));
         
-        // But endpoint is still open.
-        assertTrue(_lastEndp.isOpen());
+        if (_lastEndp.isOpen())
+        {
+            // half close so wait another idle period
+            assertTrue(_lastEndp.isOutputShutdown());
+            Thread.sleep(2000);
+        }
         
-        
-        // Wait for another idle callback
-        Thread.sleep(2000);
         // endpoint is closed.
-        
         assertFalse(_lastEndp.isOpen());
         
     }

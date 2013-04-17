@@ -1,17 +1,24 @@
-// ========================================================================
-// Copyright (c) 2004-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.server;
+import java.util.Locale;
+
 import javax.servlet.http.Cookie;
 
 import org.eclipse.jetty.util.LazyList;
@@ -274,14 +281,14 @@ public class CookieCutter
                 if (value!=null && name!=null)
                 {
                     // TODO handle unquoting during parsing!  But quoting is uncommon
-                    name=QuotedStringTokenizer.unquote(name);
-                    value=QuotedStringTokenizer.unquote(value);
+                    name=QuotedStringTokenizer.unquoteOnly(name);
+                    value=QuotedStringTokenizer.unquoteOnly(value);
                     
                     try
                     {
                         if (name.startsWith("$"))
                         {
-                            String lowercaseName = name.toLowerCase();
+                            String lowercaseName = name.toLowerCase(Locale.ENGLISH);
                             if ("$path".equals(lowercaseName))
                             {
                                 if (cookie!=null)
@@ -312,7 +319,6 @@ public class CookieCutter
                     }
                     catch (Exception e)
                     {
-                        LOG.warn(e.toString());
                         LOG.debug(e);
                     }
 

@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 1999-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.servlet;
 
@@ -41,6 +46,8 @@ import org.eclipse.jetty.security.IdentityService;
 import org.eclipse.jetty.security.RunAsToken;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.UserIdentity;
+import org.eclipse.jetty.server.handler.ContextHandler;
+import org.eclipse.jetty.util.Loader;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 
@@ -285,16 +292,28 @@ public class ServletHolder extends Holder<Servlet> implements UserIdentity.Scope
         _unavailable=0;
         if (!_enabled)
             return;
-        
+        //check servlet has a class (ie is not a preliminary registration). If preliminary, fail startup.
         try
         {
             super.doStart();
+        } 
+        catch (UnavailableException ue)
+        {
+            makeUnavailable(ue);
+            throw ue;
+        }
+        
+        try
+        {
             checkServletType();
         }
         catch (UnavailableException ue)
         {
             makeUnavailable(ue);
+            if (!_servletHandler.isStartWithUnavailable())
+                throw ue; //servlet is not an instance of javax.servlet.Servlet
         }
+        
 
         _identityService = _servletHandler.getIdentityService();
         if (_identityService!=null && _runAsRole!=null)
@@ -488,7 +507,15 @@ public class ServletHolder extends Holder<Servlet> implements UserIdentity.Scope
             {
                 old_run_as=_identityService.setRunAs(_identityService.getSystemUserIdentity(),_runAsToken);
             }
+            
+            // Handle configuring servlets that implement org.apache.jasper.servlet.JspServlet
+            if (isJspServlet())
+            {
+                initJspServlet();
+            }
 
+            initMultiPart();
+            
             _servlet.init(_config);
         }
         catch (UnavailableException e)
@@ -520,6 +547,50 @@ public class ServletHolder extends Holder<Servlet> implements UserIdentity.Scope
         }
     }
     
+    
+    /* ------------------------------------------------------------ */
+    /**
+     * @throws Exception
+     */
+    protected void initJspServlet () throws Exception
+    {
+        ContextHandler ch = ((ContextHandler.Context)getServletHandler().getServletContext()).getContextHandler();
+        
+        /* Set the webapp's classpath for Jasper */
+        ch.setAttribute("org.apache.catalina.jsp_classpath", ch.getClassPath());
+
+        /* Set the system classpath for Jasper */
+        setInitParameter("com.sun.appserv.jsp.classpath", Loader.getClassPath(ch.getClassLoader().getParent())); 
+        
+        /* Set up other classpath attribute */
+        if ("?".equals(getInitParameter("classpath")))
+        {
+            String classpath = ch.getClassPath();
+            LOG.debug("classpath=" + classpath);
+            if (classpath != null) 
+                setInitParameter("classpath", classpath);
+        }
+    }
+    
+    /* ------------------------------------------------------------ */
+    /**
+     * Register a ServletRequestListener that will ensure tmp multipart
+     * files are deleted when the request goes out of scope.
+     * 
+     * @throws Exception
+     */
+    protected void initMultiPart () throws Exception
+    {
+        //if this servlet can handle multipart requests, ensure tmp files will be
+        //cleaned up correctly
+        if (((Registration)getRegistration()).getMultipartConfig() != null)
+        {
+            //Register a listener to delete tmp files that are created as a result of this
+            //servlet calling Request.getPart() or Request.getParts()
+            ContextHandler ch = ((ContextHandler.Context)getServletHandler().getServletContext()).getContextHandler();
+            ch.addEventListener(new Request.MultiPartCleanerListener());
+        }
+    }
     
     /* ------------------------------------------------------------ */
     /**
@@ -616,6 +687,34 @@ public class ServletHolder extends Holder<Servlet> implements UserIdentity.Scope
                 request.setAttribute("javax.servlet.error.servlet_name",getName());
         }
     }
+    
+    
+    /* ------------------------------------------------------------ */
+    private boolean isJspServlet ()
+    {
+        if (_servlet == null)
+            return false;
+        
+        Class c = _servlet.getClass();
+        
+        boolean result = false;
+        while (c != null && !result)
+        {
+            result = isJspServlet(c.getName());
+            c = c.getSuperclass();
+        }
+        
+        return result;
+    }
+    
+    
+    /* ------------------------------------------------------------ */
+    private boolean isJspServlet (String classname)
+    {
+        if (classname == null)
+            return false;
+        return ("org.apache.jasper.servlet.JspServlet".equals(classname));
+    }
 
  
     /* ------------------------------------------------------------ */
@@ -644,17 +743,24 @@ public class ServletHolder extends Holder<Servlet> implements UserIdentity.Scope
             Set<String> clash=null;
             for (String pattern : urlPatterns)
             {
-                if (_servletHandler.getServletMapping(pattern)!=null)
+                ServletMapping mapping = _servletHandler.getServletMapping(pattern);
+                if (mapping!=null)
                 {
-                    if (clash==null)
-                        clash=new HashSet<String>();
-                    clash.add(pattern);
+                    //if the servlet mapping was from a default descriptor, then allow it to be overridden
+                    if (!mapping.isDefault())
+                    {
+                        if (clash==null)
+                            clash=new HashSet<String>();
+                        clash.add(pattern);
+                    }
                 }
             }
             
+            //if there were any clashes amongst the urls, return them
             if (clash!=null)
                 return clash;
             
+            //otherwise apply all of them
             ServletMapping mapping = new ServletMapping();
             mapping.setServletName(ServletHolder.this.getName());
             mapping.setPathSpecs(urlPatterns);

@@ -1,0 +1,84 @@
+diff --git a/example-async-rest/async-rest-jar/pom.xml b/example-async-rest/async-rest-jar/pom.xml
+index 43afb03..7c87270 100644
+--- a/example-async-rest/async-rest-jar/pom.xml
++++ b/example-async-rest/async-rest-jar/pom.xml
+@@ -18,6 +18,7 @@
+     <dependency>
+          <groupId>org.eclipse.jetty.orbit</groupId>
+          <artifactId>javax.servlet</artifactId>
++         <version>3.0.0.v201112011016</version>
+          <scope>provided</scope>
+        </dependency>
+   </dependencies>
+diff --git a/example-async-rest/async-rest-webapp/pom.xml b/example-async-rest/async-rest-webapp/pom.xml
+index 8223200..d644ef5 100644
+--- a/example-async-rest/async-rest-webapp/pom.xml
++++ b/example-async-rest/async-rest-webapp/pom.xml
+@@ -27,6 +27,7 @@
+       <dependency>
+          <groupId>org.eclipse.jetty.orbit</groupId>
+          <artifactId>javax.servlet</artifactId>
++         <version>3.0.0.v201112011016</version>
+          <scope>provided</scope>
+        </dependency>
+   </dependencies>
+diff --git a/jetty-osgi/jetty-osgi-boot-jsp/pom.xml b/jetty-osgi/jetty-osgi-boot-jsp/pom.xml
+index a77c167..4e40256 100644
+--- a/jetty-osgi/jetty-osgi-boot-jsp/pom.xml
++++ b/jetty-osgi/jetty-osgi-boot-jsp/pom.xml
+@@ -35,6 +35,7 @@
+     <dependency>
+       <groupId>org.eclipse.jetty.orbit</groupId>
+       <artifactId>javax.servlet</artifactId>
++      <version>3.0.0.v201112011016</version>
+     </dependency>
+     <!-- Orbit JSP Deps -->
+     <dependency>
+diff --git a/jetty-osgi/jetty-osgi-httpservice/pom.xml b/jetty-osgi/jetty-osgi-httpservice/pom.xml
+index 7db5374..afc51aa 100644
+--- a/jetty-osgi/jetty-osgi-httpservice/pom.xml
++++ b/jetty-osgi/jetty-osgi-httpservice/pom.xml
+@@ -32,6 +32,7 @@
+     <dependency>
+       <groupId>org.eclipse.jetty.orbit</groupId>
+       <artifactId>javax.servlet</artifactId>
++      <version>3.0.0.v201112011016</version>
+     </dependency>
+   </dependencies>
+ 
+diff --git a/jetty-osgi/test-jetty-osgi/pom.xml b/jetty-osgi/test-jetty-osgi/pom.xml
+index 36f7512..eca1e50 100644
+--- a/jetty-osgi/test-jetty-osgi/pom.xml
++++ b/jetty-osgi/test-jetty-osgi/pom.xml
+@@ -20,6 +20,7 @@
+     <dependency>
+       <groupId>org.eclipse.jetty.orbit</groupId>
+       <artifactId>javax.servlet</artifactId>
++      <version>3.0.0.v201112011016</version>
+     </dependency>
+ 
+     <!-- Orbit JSP Deps -->
+diff --git a/test-jetty-webapp/pom.xml b/test-jetty-webapp/pom.xml
+index 22df6e1..22f9e93 100644
+--- a/test-jetty-webapp/pom.xml
++++ b/test-jetty-webapp/pom.xml
+@@ -171,6 +171,7 @@
+     <dependency>
+       <groupId>org.eclipse.jetty.orbit</groupId>
+       <artifactId>javax.servlet</artifactId>
++      <version>3.0.0.v201112011016</version>
+       <scope>provided</scope>
+     </dependency>
+     <dependency>
+diff --git a/tests/test-webapps/test-webapp-rfc2616/pom.xml b/tests/test-webapps/test-webapp-rfc2616/pom.xml
+index 61ba404..012cc80 100644
+--- a/tests/test-webapps/test-webapp-rfc2616/pom.xml
++++ b/tests/test-webapps/test-webapp-rfc2616/pom.xml
+@@ -47,6 +47,7 @@
+     <dependency>
+       <groupId>org.eclipse.jetty.orbit</groupId>
+       <artifactId>javax.servlet</artifactId>
++      <version>3.0.0.v201112011016</version>
+       <scope>provided</scope>
+     </dependency>
+   </dependencies>

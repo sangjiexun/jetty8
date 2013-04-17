@@ -2,3 +2,5 @@ disable-osgi-tests.patch
 maven-bundle-plugin-version.patch
 disable-modules.patch
 aggregate-doc.patch
+jetty-test-helper-version.patch
+javax-servlet-version.patch

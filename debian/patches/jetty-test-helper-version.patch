@@ -1,0 +1,48 @@
+diff --git a/example-jetty-embedded/pom.xml b/example-jetty-embedded/pom.xml
+index 05447fc..d73e1f0 100644
+--- a/example-jetty-embedded/pom.xml
++++ b/example-jetty-embedded/pom.xml
+@@ -47,6 +47,7 @@
+      <dependency>
+       <groupId>org.eclipse.jetty.toolchain</groupId>
+       <artifactId>jetty-test-helper</artifactId>
++      <version>${project.version}</version>
+       <scope>test</scope>
+     </dependency>
+     <dependency>
+diff --git a/jetty-osgi/test-jetty-osgi/pom.xml b/jetty-osgi/test-jetty-osgi/pom.xml
+index 36f7512..9374849 100644
+--- a/jetty-osgi/test-jetty-osgi/pom.xml
++++ b/jetty-osgi/test-jetty-osgi/pom.xml
+@@ -179,6 +179,7 @@
+     <dependency>
+       <groupId>org.eclipse.jetty.toolchain</groupId>
+       <artifactId>jetty-test-helper</artifactId>
++      <version>${project.version}</version>
+       <scope>test</scope>
+     </dependency>
+ 
+diff --git a/tests/test-integration/pom.xml b/tests/test-integration/pom.xml
+index f63f7e5..ef03a8d 100644
+--- a/tests/test-integration/pom.xml
++++ b/tests/test-integration/pom.xml
+@@ -117,6 +117,7 @@
+     <dependency>
+       <groupId>org.eclipse.jetty.toolchain</groupId>
+       <artifactId>jetty-test-helper</artifactId>
++      <version>${project.version}</version>
+       <scope>test</scope>
+     </dependency>
+     <dependency>
+diff --git a/tests/test-sessions/test-sessions-common/pom.xml b/tests/test-sessions/test-sessions-common/pom.xml
+index 7958643..0961472 100644
+--- a/tests/test-sessions/test-sessions-common/pom.xml
++++ b/tests/test-sessions/test-sessions-common/pom.xml
+@@ -46,6 +46,7 @@
+     <dependency>
+       <groupId>org.eclipse.jetty.toolchain</groupId>
+       <artifactId>jetty-test-helper</artifactId>
++      <version>${project.version}</version>
+       <scope>compile</scope>
+     </dependency>
+   </dependencies>

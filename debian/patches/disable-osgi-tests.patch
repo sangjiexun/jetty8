@@ -7,13 +7,13 @@ Subject: disable-osgi-tests
  1 files changed, 1 insertions(+), 1 deletions(-)
 
 diff --git a/jetty-osgi/pom.xml b/jetty-osgi/pom.xml
-index 428cd22..ab23218 100644
+index c153729..3a9e6e7 100644
 --- a/jetty-osgi/pom.xml
 +++ b/jetty-osgi/pom.xml
-@@ -24,7 +24,7 @@
-     <module>jetty-osgi-boot-jsp</module>
-     <module>jetty-osgi-boot-warurl</module>
+@@ -25,7 +25,7 @@
      <module>jetty-osgi-httpservice</module>
+     <module>test-jetty-osgi-webapp</module>
+     <module>test-jetty-osgi-context</module>
 -    <module>test-jetty-osgi</module>
 +    <!--module>test-jetty-osgi</module-->
    </modules>

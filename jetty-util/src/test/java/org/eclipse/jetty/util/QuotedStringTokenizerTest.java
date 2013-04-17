@@ -1,21 +1,24 @@
-// ========================================================================
-// Copyright (c) 2004-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
@@ -173,5 +176,33 @@ public class QuotedStringTokenizerTest
         assertEquals("ab\u001ec",QuotedStringTokenizer.unquote("ab\u001ec"));
         assertEquals("ab\u001ec",QuotedStringTokenizer.unquote("\"ab\u001ec\""));
     }
+    
+    
+    @Test
+    public void testUnquoteOnly()
+    {
+        assertEquals("abc",QuotedStringTokenizer.unquoteOnly("abc"));
+        assertEquals("a\"c",QuotedStringTokenizer.unquoteOnly("\"a\\\"c\""));
+        assertEquals("a'c",QuotedStringTokenizer.unquoteOnly("\"a'c\""));
+        assertEquals("a\\n\\r\\t",QuotedStringTokenizer.unquoteOnly("\"a\\\\n\\\\r\\\\t\""));
+        assertEquals("ba\\uXXXXaaa", QuotedStringTokenizer.unquoteOnly("\"ba\\\\uXXXXaaa\""));
+    }
 
+    /**
+     * When encountering a Content-Disposition line during a multi-part mime file
+     * upload, the filename="..." field can contain '\' characters that do not
+     * belong to a proper escaping sequence, this tests QuotedStringTokenizer to
+     * ensure that it preserves those slashes for where they cannot be escaped.
+     */
+    @Test
+    public void testNextTokenOnContentDisposition()
+    {
+        String content_disposition = "form-data; name=\"fileup\"; filename=\"Taken on Aug 22 \\ 2012.jpg\"";
+     
+        QuotedStringTokenizer tok=new QuotedStringTokenizer(content_disposition,";",false,true);
+        
+        assertEquals("form-data", tok.nextToken().trim());
+        assertEquals("name=\"fileup\"", tok.nextToken().trim());
+        assertEquals("filename=\"Taken on Aug 22 \\ 2012.jpg\"", tok.nextToken().trim());
+    }
 }

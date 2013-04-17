@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2003-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.plus.jaas;
 
@@ -31,9 +36,12 @@ import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 
 import org.eclipse.jetty.plus.jaas.callback.ObjectCallback;
+import org.eclipse.jetty.plus.jaas.callback.RequestParameterCallback;
 import org.eclipse.jetty.security.DefaultIdentityService;
 import org.eclipse.jetty.security.IdentityService;
 import org.eclipse.jetty.security.LoginService;
+import org.eclipse.jetty.server.AbstractHttpConnection;
+import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.UserIdentity;
 import org.eclipse.jetty.util.Loader;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
@@ -200,6 +208,19 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService
                             {
                                 ((ObjectCallback)callback).setObject(credentials);
                             }
+                            else if (callback instanceof RequestParameterCallback)
+                            {
+                                AbstractHttpConnection connection = AbstractHttpConnection.getCurrentConnection();
+                                Request request = (connection == null? null : connection.getRequest());
+                                
+                                if (request != null)
+                                {
+                                    RequestParameterCallback rpc = (RequestParameterCallback)callback;
+                                    rpc.setParameterValues(Arrays.asList(request.getParameterValues(rpc.getParameterName())));
+                                }
+                            }
+                            else 
+                                throw new UnsupportedCallbackException(callback);
                         }
                     }
                 };
@@ -224,27 +245,32 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService
         }
         catch (LoginException e)
         {
-            LOG.warn(e);
+            LOG.debug(e);
         }
         catch (IOException e)
         {
-            LOG.warn(e);
+            LOG.info(e.getMessage());
+            LOG.debug(e);
         }
         catch (UnsupportedCallbackException e)
         {
-           LOG.warn(e);
+            LOG.info(e.getMessage());
+            LOG.debug(e);
         }
         catch (InstantiationException e)
         {
-            LOG.warn(e);
+            LOG.info(e.getMessage());
+            LOG.debug(e);
         }
         catch (IllegalAccessException e)
         {
-            LOG.warn(e);
+            LOG.info(e.getMessage());
+            LOG.debug(e);
         }
         catch (ClassNotFoundException e)
         {
-            LOG.warn(e);
+            LOG.info(e.getMessage());
+            LOG.debug(e);
         }
         return null;
     }

@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2007-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.testing;
 
@@ -50,7 +55,25 @@ public class HttpTesterTest extends TestCase
         assertEquals(200, tester.getStatus());
         assertEquals("22", tester.getHeader("Content-Length"));
         assertEquals("text/html",tester.getContentType());
-        System.err.println(tester.getContent());
     }
 
+    public void testSetCharset() throws Exception
+    {      
+        String content = "123456789\uA74A";
+        HttpTester tester = new HttpTester();
+        tester.setVersion("HTTP/1.0");
+        tester.setMethod("POST");
+        tester.setHeader("Content-type", "application/json; charset=iso-8859-1");
+        tester.setURI("/1/batch");
+        tester.setContent(content);
+        assertEquals("123456789?",tester.getContent());
+
+        tester.setHeader("Content-type", "application/json; charset=UTF-8");
+        tester.setContent(content);
+        assertEquals("123456789\uA74A",tester.getContent());
+  
+        String request=tester.generate();
+        assertTrue(request.startsWith("POST "));
+        assertTrue(request.trim().endsWith(content));
+    }
 }

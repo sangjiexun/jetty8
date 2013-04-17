@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2006-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses.
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.servlet;
 
@@ -45,6 +50,7 @@ public class ErrorPageErrorHandler extends ErrorHandler
     private static final Logger LOG = Log.getLogger(ErrorPageErrorHandler.class);
 
     public final static String ERROR_PAGE="org.eclipse.jetty.server.error_page";
+    public final static String GLOBAL_ERROR_PAGE = "org.eclipse.jetty.server.error_page.global";
 
     protected ServletContext _servletContext;
     private final Map<String,String> _errorPages= new HashMap<String,String>(); // code or exception to URL
@@ -114,6 +120,12 @@ public class ErrorPageErrorHandler extends ErrorHandler
                         }
                     }
                 }
+            }
+            
+            //try new servlet 3.0 global error page
+            if (error_page == null)
+            {
+                error_page = _errorPages.get(GLOBAL_ERROR_PAGE);
             }
 
             if (error_page!=null)

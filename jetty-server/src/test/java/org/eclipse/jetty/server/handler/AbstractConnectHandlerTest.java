@@ -1,3 +1,21 @@
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
+
 package org.eclipse.jetty.server.handler;
 
 import java.io.BufferedReader;
@@ -6,6 +24,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -86,14 +105,15 @@ public abstract class AbstractConnectHandlerTest
             assertTrue(header.lookingAt());
             String headerName = header.group(1);
             String headerValue = header.group(2);
-            headers.put(headerName.toLowerCase(), headerValue.toLowerCase());
+            headers.put(headerName.toLowerCase(Locale.ENGLISH), headerValue.toLowerCase(Locale.ENGLISH));
         }
 
-        StringBuilder body = new StringBuilder();
+        StringBuilder body;
         if (headers.containsKey("content-length"))
         {
             int readLen = 0;
             int length = Integer.parseInt(headers.get("content-length"));
+            body=new StringBuilder(length);
             try
             {
                 for (int i = 0; i < length; ++i)
@@ -101,7 +121,9 @@ public abstract class AbstractConnectHandlerTest
                     char c = (char)reader.read();
                     body.append(c);
                     readLen++;
+                        
                 }
+                
             }
             catch (SocketTimeoutException e)
             {
@@ -111,6 +133,7 @@ public abstract class AbstractConnectHandlerTest
         }
         else if ("chunked".equals(headers.get("transfer-encoding")))
         {
+            body = new StringBuilder(64*1024);
             while ((line = reader.readLine()) != null)
             {
                 if ("0".equals(line))
@@ -120,6 +143,15 @@ public abstract class AbstractConnectHandlerTest
                     break;
                 }
 
+                try
+                {
+                    Thread.sleep(5);
+                }
+                catch (InterruptedException e)
+                {
+                    e.printStackTrace();
+                }
+                
                 int length = Integer.parseInt(line, 16);
                 for (int i = 0; i < length; ++i)
                 {
@@ -130,6 +162,7 @@ public abstract class AbstractConnectHandlerTest
                 assertEquals("", line);
             }
         }
+        else throw new IllegalStateException();
 
         return new Response(code, headers, body.toString().trim());
     }

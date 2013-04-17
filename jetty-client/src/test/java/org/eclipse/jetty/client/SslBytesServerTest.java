@@ -1,6 +1,22 @@
-package org.eclipse.jetty.client;
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
-import static org.hamcrest.Matchers.*;
+package org.eclipse.jetty.client;
 
 import java.io.BufferedReader;
 import java.io.EOFException;
@@ -21,7 +37,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSocket;
@@ -53,6 +68,11 @@ import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
+
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.Matchers.not;
 
 public class SslBytesServerTest extends SslBytesTest
 {
@@ -829,7 +849,9 @@ public class SslBytesServerTest extends SslBytesTest
         // Close the raw socket, this generates a truncation attack
         proxy.flushToServer((TLSRecord)null);
 
-        // Expect raw close from server
+        // Expect alert + raw close from server
+        record = proxy.readFromServer();
+        Assert.assertEquals(TLSRecord.Type.ALERT, record.getType());
         record = proxy.readFromServer();
         Assert.assertNull(String.valueOf(record), record);
         proxy.flushToClient(record);
@@ -1613,9 +1635,9 @@ public class SslBytesServerTest extends SslBytesTest
 
         //System.err.println(((Dumpable)server.getConnectors()[0]).dump());
         Assert.assertThat(((Dumpable)server.getConnectors()[0]).dump(),containsString("SCEP@"));
-        
+
         completeClose(client);
-        
+
         TimeUnit.MILLISECONDS.sleep(200);
         //System.err.println(((Dumpable)server.getConnectors()[0]).dump());
         Assert.assertThat(((Dumpable)server.getConnectors()[0]).dump(),not(containsString("SCEP@")));
@@ -1730,13 +1752,13 @@ public class SslBytesServerTest extends SslBytesTest
         // Close Alert
         record = proxy.readFromServer();
         proxy.flushToClient(record);
-        
+
         // Socket close
         record = proxy.readFromServer();
         Assert.assertNull(String.valueOf(record), record);
         proxy.flushToClient(record);
     }
-    
+
     private void completeClose(SSLSocket client) throws Exception
     {
         client.close();
@@ -1752,6 +1774,6 @@ public class SslBytesServerTest extends SslBytesTest
         // Close Alert
         record = proxy.readFromServer();
         proxy.flushToClient(record);
-        
+
     }
 }

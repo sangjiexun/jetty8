@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 1999-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses.
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.server.handler;
 
@@ -64,6 +69,7 @@ public class ResourceHandler extends HandlerWrapper
     ByteArrayBuffer _cacheControl;
     boolean _aliases;
     boolean _directory;
+    boolean _etags;
 
     /* ------------------------------------------------------------ */
     public ResourceHandler()
@@ -121,6 +127,24 @@ public class ResourceHandler extends HandlerWrapper
     public void setDirectoriesListed(boolean directory)
     {
         _directory = directory;
+    }
+
+    /* ------------------------------------------------------------ */
+    /**
+     * @return True if ETag processing is done
+     */
+    public boolean isEtags()
+    {
+        return _etags;
+    }
+
+    /* ------------------------------------------------------------ */
+    /**
+     * @param etags True if ETag processing is done
+     */
+    public void setEtags(boolean etags)
+    {
+        _etags = etags;
     }
 
     /* ------------------------------------------------------------ */
@@ -414,6 +438,21 @@ public class ResourceHandler extends HandlerWrapper
 
         // set some headers
         long last_modified=resource.lastModified();
+        String etag=null;
+        if (_etags)
+        {
+            // simple handling of only a single etag
+            String ifnm = request.getHeader(HttpHeaders.IF_NONE_MATCH);
+            etag=resource.getWeakETag();
+            if (ifnm!=null && resource!=null && ifnm.equals(etag))
+            {
+                response.setStatus(HttpStatus.NOT_MODIFIED_304);
+                baseRequest.getResponse().getHttpFields().put(HttpHeaders.ETAG_BUFFER,etag);
+                return;
+            }
+        }
+        
+        
         if (last_modified>0)
         {
             long if_modified=request.getDateHeader(HttpHeaders.IF_MODIFIED_SINCE);
@@ -431,6 +470,9 @@ public class ResourceHandler extends HandlerWrapper
         // set the headers
         doResponseHeaders(response,resource,mime!=null?mime.toString():null);
         response.setDateHeader(HttpHeaders.LAST_MODIFIED,last_modified);
+        if (_etags)
+            baseRequest.getResponse().getHttpFields().put(HttpHeaders.ETAG_BUFFER,etag);
+        
         if(skipContentBody)
             return;
         // Send the content

@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.webapp;
 
@@ -196,7 +201,7 @@ public class MetaData
                 _metaDataComplete=true;
                 break;
             case False:
-                _metaDataComplete=true;
+                _metaDataComplete=false;
                 break;
             case NotSet:
                 break;
@@ -266,12 +271,42 @@ public class MetaData
      */
     public void addDiscoveredAnnotations(List<DiscoveredAnnotation> annotations)
     {
-        _annotations.addAll(annotations);
+        if (annotations == null)
+            return;
+        for (DiscoveredAnnotation a:annotations)
+        {
+            Resource r = a.getResource();
+            if (r == null || !_webInfJars.contains(r))
+                _annotations.add(a);
+            else 
+                addDiscoveredAnnotation(a.getResource(), a);
+                
+        }
     }
+    
+    
+    public void addDiscoveredAnnotation(Resource resource, DiscoveredAnnotation annotation)
+    {
+        List<DiscoveredAnnotation> list = _webFragmentAnnotations.get(resource);
+        if (list == null)
+        {
+            list = new ArrayList<DiscoveredAnnotation>();
+            _webFragmentAnnotations.put(resource, list);
+        }
+        list.add(annotation);
+    }
+    
 
     public void addDiscoveredAnnotations(Resource resource, List<DiscoveredAnnotation> annotations)
     {
-        _webFragmentAnnotations.put(resource, new ArrayList<DiscoveredAnnotation>(annotations));
+        List<DiscoveredAnnotation> list = _webFragmentAnnotations.get(resource);
+        if (list == null)
+        {
+            list = new ArrayList<DiscoveredAnnotation>();
+            _webFragmentAnnotations.put(resource, list);
+        }
+            
+        list.addAll(annotations);
     }
     
     public void addDescriptorProcessor(DescriptorProcessor p)
@@ -501,6 +536,15 @@ public class MetaData
             return;
        
         OriginInfo x = new OriginInfo (name, Origin.Annotation);
+        _origins.put(name, x);
+    }
+    
+    public void setOrigin(String name, Origin origin)
+    {
+        if (name == null)
+            return;
+       
+        OriginInfo x = new OriginInfo (name, origin);
         _origins.put(name, x);
     }
 

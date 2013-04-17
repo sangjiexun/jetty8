@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2006-2010 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.util;
 
@@ -29,14 +34,19 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.StringTokenizer;
 
 import javax.servlet.MultipartConfigElement;
 import javax.servlet.ServletException;
 import javax.servlet.http.Part;
+
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
 
 
 
@@ -47,6 +57,8 @@ import javax.servlet.http.Part;
  */
 public class MultiPartInputStream
 {
+    private static final Logger LOG = Log.getLogger(MultiPartInputStream.class);
+
     public static final MultipartConfigElement  __DEFAULT_MULTIPART_CONFIG = new MultipartConfigElement(System.getProperty("java.io.tmpdir"));
     protected InputStream _in;
     protected MultipartConfigElement _config;
@@ -54,7 +66,7 @@ public class MultiPartInputStream
     protected MultiMap<String> _parts;
     protected File _tmpDir;
     protected File _contextTmpDir;
- 
+    protected boolean _deleteOnExit;
     
     
     
@@ -68,6 +80,7 @@ public class MultiPartInputStream
         protected String _contentType;
         protected MultiMap<String> _headers;
         protected long _size = 0;
+        protected boolean _temporary = true;
 
         public MultiPart (String name, String filename) 
         throws IOException
@@ -83,7 +96,7 @@ public class MultiPartInputStream
         
         
         protected void open() 
-        throws FileNotFoundException, IOException
+        throws IOException
         {
             //We will either be writing to a file, if it has a filename on the content-disposition
             //and otherwise a byte-array-input-stream, OR if we exceed the getFileSizeThreshold, we
@@ -108,10 +121,10 @@ public class MultiPartInputStream
         
       
         protected void write (int b)
-        throws IOException, ServletException
+        throws IOException
         {      
             if (MultiPartInputStream.this._config.getMaxFileSize() > 0 && _size + 1 > MultiPartInputStream.this._config.getMaxFileSize())
-                throw new ServletException ("Multipart Mime part "+_name+" exceeds max filesize");
+                throw new IllegalStateException ("Multipart Mime part "+_name+" exceeds max filesize");
             
             if (MultiPartInputStream.this._config.getFileSizeThreshold() > 0 && _size + 1 > MultiPartInputStream.this._config.getFileSizeThreshold() && _file==null)
                 createFile();
@@ -120,10 +133,10 @@ public class MultiPartInputStream
         }
         
         protected void write (byte[] bytes, int offset, int length) 
-        throws IOException, ServletException
+        throws IOException
         { 
             if (MultiPartInputStream.this._config.getMaxFileSize() > 0 && _size + length > MultiPartInputStream.this._config.getMaxFileSize())
-                throw new ServletException ("Multipart Mime part "+_name+" exceeds max filesize");
+                throw new IllegalStateException ("Multipart Mime part "+_name+" exceeds max filesize");
             
             if (MultiPartInputStream.this._config.getFileSizeThreshold() > 0 && _size + length > MultiPartInputStream.this._config.getFileSizeThreshold() && _file==null)
                 createFile();
@@ -136,6 +149,8 @@ public class MultiPartInputStream
         throws IOException
         {
             _file = File.createTempFile("MultiPart", "", MultiPartInputStream.this._tmpDir);
+            if (_deleteOnExit)
+                _file.deleteOnExit();
             FileOutputStream fos = new FileOutputStream(_file);
             BufferedOutputStream bos = new BufferedOutputStream(fos);
             
@@ -172,7 +187,7 @@ public class MultiPartInputStream
         {
             if (name == null)
                 return null;
-            return (String)_headers.getValue(name.toLowerCase(), 0);
+            return (String)_headers.getValue(name.toLowerCase(Locale.ENGLISH), 0);
         }
 
         /** 
@@ -198,11 +213,12 @@ public class MultiPartInputStream
         {
            if (_file != null)
            {
+               //written to a file, whether temporary or not
                return new BufferedInputStream (new FileInputStream(_file));
            }
            else
            {
-               //part content is in a ByteArrayOutputStream
+               //part content is in memory
                return new ByteArrayInputStream(_bout.getBuf(),0,_bout.size());
            }
         }
@@ -227,7 +243,7 @@ public class MultiPartInputStream
          */
         public long getSize()
         {
-            return _size;
+            return _size;         
         }
 
         /** 
@@ -237,8 +253,11 @@ public class MultiPartInputStream
         {
             if (_file == null)
             {
+                _temporary = false;
+                
                 //part data is only in the ByteArrayOutputStream and never been written to disk
                 _file = new File (_tmpDir, fileName);
+
                 BufferedOutputStream bos = null;
                 try
                 {
@@ -256,6 +275,8 @@ public class MultiPartInputStream
             else
             {
                 //the part data is already written to a temporary file, just rename it
+                _temporary = false;
+                
                 File f = new File(_tmpDir, fileName);
                 if (_file.renameTo(f))
                     _file = f;
@@ -263,12 +284,25 @@ public class MultiPartInputStream
         }
         
         /** 
+         * Remove the file, whether or not Part.write() was called on it
+         * (ie no longer temporary)
          * @see javax.servlet.http.Part#delete()
          */
         public void delete() throws IOException
         {
-            if (_file != null)
+            if (_file != null && _file.exists())
                 _file.delete();     
+        }
+        
+        /**
+         * Only remove tmp files.
+         * 
+         * @throws IOException
+         */
+        public void cleanUp() throws IOException
+        {
+            if (_temporary && _file != null && _file.exists())
+                _file.delete();
         }
         
         
@@ -303,18 +337,71 @@ public class MultiPartInputStream
      */
     public MultiPartInputStream (InputStream in, String contentType, MultipartConfigElement config, File contextTmpDir)
     {
-        _in = new BufferedInputStream(in);
+        _in = new ReadLineInputStream(in);
        _contentType = contentType;
        _config = config;
        _contextTmpDir = contextTmpDir;
        if (_contextTmpDir == null)
            _contextTmpDir = new File (System.getProperty("java.io.tmpdir"));
+       
        if (_config == null)
            _config = new MultipartConfigElement(_contextTmpDir.getAbsolutePath());
     }
 
+    /**
+     * Get the already parsed parts.
+     * 
+     * @return
+     */
+    public Collection<Part> getParsedParts()
+    {
+        if (_parts == null)
+            return Collections.emptyList();
+
+        Collection<Object> values = _parts.values();
+        List<Part> parts = new ArrayList<Part>();
+        for (Object o: values)
+        {
+            List<Part> asList = LazyList.getList(o, false);
+            parts.addAll(asList);
+        }
+        return parts;
+    }
     
+    /**
+     * Delete any tmp storage for parts, and clear out the parts list.
+     * 
+     * @throws MultiException
+     */
+    public void deleteParts ()
+    throws MultiException
+    {
+        Collection<Part> parts = getParsedParts();
+        MultiException err = new MultiException();
+        for (Part p:parts)
+        {
+            try
+            {
+                ((MultiPartInputStream.MultiPart)p).cleanUp();
+            } 
+            catch(Exception e)
+            {     
+                err.add(e); 
+            }
+        }
+        _parts.clear();
+        
+        err.ifExceptionThrowMulti();
+    }
+
    
+    /**
+     * Parse, if necessary, the multipart data and return the list of Parts.
+     * 
+     * @return
+     * @throws IOException
+     * @throws ServletException
+     */
     public Collection<Part> getParts()
     throws IOException, ServletException
     {
@@ -330,6 +417,14 @@ public class MultiPartInputStream
     }
     
     
+    /**
+     * Get the named Part.
+     * 
+     * @param name
+     * @return
+     * @throws IOException
+     * @throws ServletException
+     */
     public Part getPart(String name)
     throws IOException, ServletException
     {
@@ -338,6 +433,12 @@ public class MultiPartInputStream
     }
     
     
+    /**
+     * Parse, if necessary, the multipart stream.
+     * 
+     * @throws IOException
+     * @throws ServletException
+     */
     protected void parse ()
     throws IOException, ServletException
     {
@@ -371,16 +472,34 @@ public class MultiPartInputStream
         if (!_tmpDir.exists())
             _tmpDir.mkdirs();
 
-        String boundary="--"+QuotedStringTokenizer.unquote(value(_contentType.substring(_contentType.indexOf("boundary="))).trim());
+        String contentTypeBoundary = "";
+        if (_contentType.indexOf("boundary=") >= 0)
+            contentTypeBoundary = QuotedStringTokenizer.unquote(value(_contentType.substring(_contentType.indexOf("boundary=")), true).trim());
+        
+        String boundary="--"+contentTypeBoundary;
         byte[] byteBoundary=(boundary+"--").getBytes(StringUtil.__ISO_8859_1);
 
         // Get first boundary
-        byte[] bytes=TypeUtil.readLine(_in);
-        String line=bytes==null?null:new String(bytes,"UTF-8");
-        if(line==null || !line.equals(boundary))
+        String line=((ReadLineInputStream)_in).readLine();
+
+        if (line == null)
+            throw new IOException("Missing content for multipart request");
+
+        boolean badFormatLogged = false;
+        line=line.trim();
+        while (line != null && !line.equals(boundary))
         {
-            throw new IOException("Missing initial multi part boundary");
+            if (!badFormatLogged)
+            {
+                LOG.warn("Badly formatted multipart request");
+                badFormatLogged = true;
+            }
+            line=((ReadLineInputStream)_in).readLine();
+            line=(line==null?line:line.trim());
         }
+
+        if (line == null)
+            throw new IOException("Missing initial multi part boundary");
 
         // Read each part
         boolean lastPart=false;
@@ -392,25 +511,25 @@ public class MultiPartInputStream
             MultiMap<String> headers = new MultiMap<String>();
             while(true)
             {
-                bytes=TypeUtil.readLine(_in);
-                if(bytes==null)
+                line=((ReadLineInputStream)_in).readLine();
+                
+                //No more input
+                if(line==null)
                     break outer;
 
                 // If blank line, end of part headers
-                if(bytes.length==0)
+                if("".equals(line))
                     break;
                 
-                total += bytes.length;
+                total += line.length();
                 if (_config.getMaxRequestSize() > 0 && total > _config.getMaxRequestSize())
-                    throw new ServletException ("Request exceeds maxRequestSize ("+_config.getMaxRequestSize()+")");
-                
-                line=new String(bytes,"UTF-8");
+                    throw new IllegalStateException ("Request exceeds maxRequestSize ("+_config.getMaxRequestSize()+")");
 
                 //get content-disposition and content-type
                 int c=line.indexOf(':',0);
                 if(c>0)
                 {
-                    String key=line.substring(0,c).trim().toLowerCase();
+                    String key=line.substring(0,c).trim().toLowerCase(Locale.ENGLISH);
                     String value=line.substring(c+1,line.length()).trim();
                     headers.put(key, value);
                     if (key.equalsIgnoreCase("content-disposition"))
@@ -430,19 +549,19 @@ public class MultiPartInputStream
                 throw new IOException("Missing content-disposition");
             }
 
-            QuotedStringTokenizer tok=new QuotedStringTokenizer(contentDisposition,";");
+            QuotedStringTokenizer tok=new QuotedStringTokenizer(contentDisposition,";", false, true);
             String name=null;
             String filename=null;
             while(tok.hasMoreTokens())
             {
                 String t=tok.nextToken().trim();
-                String tl=t.toLowerCase();
+                String tl=t.toLowerCase(Locale.ENGLISH);
                 if(t.startsWith("form-data"))
                     form_data=true;
                 else if(tl.startsWith("name="))
-                    name=value(t);
+                    name=value(t, true);
                 else if(tl.startsWith("filename="))
-                    filename=value(t);
+                    filename=filenameValue(t);
             }
 
             // Check disposition
@@ -505,7 +624,7 @@ public class MultiPartInputStream
                 boolean cr=false;
                 boolean lf=false;
 
-                // loop for all lines`
+                // loop for all lines
                 while(true)
                 {
                     int b=0;
@@ -513,14 +632,21 @@ public class MultiPartInputStream
                     {
                         total ++;
                         if (_config.getMaxRequestSize() > 0 && total > _config.getMaxRequestSize())
-                            throw new ServletException("Request exceeds maxRequestSize ("+_config.getMaxRequestSize()+")");
+                            throw new IllegalStateException("Request exceeds maxRequestSize ("+_config.getMaxRequestSize()+")");
                         
                         state=-2;
                         // look for CR and/or LF
                         if(c==13||c==10)
                         {
                             if(c==13)
-                                state=_in.read();
+                            {
+                                _in.mark(1);
+                                int tmp=_in.read();
+                                if (tmp!=10)
+                                    _in.reset();
+                                else
+                                    state=tmp;
+                            }
                             break;
                         }
                         // look for boundary
@@ -584,12 +710,26 @@ public class MultiPartInputStream
                 part.close();
             }
         }
+        if (!lastPart)
+            throw new IOException("Incomplete parts");
     }
     
-    
-    /* ------------------------------------------------------------ */
-    private String value(String nameEqualsValue)
+    public void setDeleteOnExit(boolean deleteOnExit)
     {
+        _deleteOnExit = deleteOnExit;
+    }
+
+
+    public boolean isDeleteOnExit()
+    {
+        return _deleteOnExit;
+    }
+
+
+    /* ------------------------------------------------------------ */
+    private String value(String nameEqualsValue, boolean splitAfterSpace)
+    {
+        /*
         String value=nameEqualsValue.substring(nameEqualsValue.indexOf('=')+1).trim();
         int i=value.indexOf(';');
         if(i>0)
@@ -598,13 +738,45 @@ public class MultiPartInputStream
         {
             value=value.substring(1,value.indexOf('"',1));
         }
-        else
+        else if (splitAfterSpace)
         {
             i=value.indexOf(' ');
             if(i>0)
                 value=value.substring(0,i);
         }
         return value;
+        */
+         int idx = nameEqualsValue.indexOf('=');
+         String value = nameEqualsValue.substring(idx+1).trim();
+         return QuotedStringTokenizer.unquoteOnly(value);
+    }
+    
+    
+    /* ------------------------------------------------------------ */
+    private String filenameValue(String nameEqualsValue)
+    {
+        int idx = nameEqualsValue.indexOf('=');
+        String value = nameEqualsValue.substring(idx+1).trim();   
+
+        if (value.matches(".??[a-z,A-Z]\\:\\\\[^\\\\].*"))
+        {
+            //incorrectly escaped IE filenames that have the whole path
+            //we just strip any leading & trailing quotes and leave it as is
+            char first=value.charAt(0);
+            if (first=='"' || first=='\'')
+                value=value.substring(1);
+            char last=value.charAt(value.length()-1);
+            if (last=='"' || last=='\'')
+                value = value.substring(0,value.length()-1);
+
+            return value;
+        }
+        else
+            //unquote the string, but allow any backslashes that don't
+            //form a valid escape sequence to remain as many browsers
+            //even on *nix systems will not escape a filename containing
+            //backslashes
+            return QuotedStringTokenizer.unquoteOnly(value, true);
     }
     
     private static class Base64InputStream extends InputStream

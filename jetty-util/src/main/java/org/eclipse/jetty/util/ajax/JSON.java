@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2004-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses.
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.util.ajax;
 
@@ -81,8 +86,12 @@ import org.eclipse.jetty.util.log.Logger;
  * . These convertors are looked up by class, interface and super class by
  * {@link #getConvertor(Class)}.
  * </p>
- *
- *
+ * <p>If a JSON object has a "class" field, then a java class for that name is
+ * looked up and the method {@link convertTo(Class,Map)} is used to find a
+ * Convertor for that class.   If a JSON object has a "x-class" field then a 
+ * direct lookup for a Convertor for that named x-class is done, so that none
+ * java classes may be converted.
+ * </p>
  */
 public class JSON
 {
@@ -940,6 +949,15 @@ public class JSON
                 next = seekTo("\"}",source);
         }
 
+        String xclassname = (String)map.get("x-class");
+        if (xclassname != null)
+        {
+        	Convertor c = getConvertorFor(xclassname);
+        	if (c != null)
+        		return c.fromJSON(map);
+        	LOG.warn("no Convertor for xclassname '%s'", xclassname);
+        }
+
         String classname = (String)map.get("class");
         if (classname != null)
         {
@@ -950,9 +968,10 @@ public class JSON
             }
             catch (ClassNotFoundException e)
             {
-                LOG.warn(e);
+                LOG.warn("no Class for classname '%s'", classname);
             }
         }
+        
         return map;
     }
 

@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2004-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.webapp;
 
@@ -23,6 +28,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -106,7 +112,14 @@ public class TagLibConfiguration extends AbstractConfiguration
                 //Get the system classpath tlds and tell jasper about them, if jasper is on the classpath
                 try
                 {
-                    Class clazz = getClass().getClassLoader().loadClass("org.apache.jasper.compiler.TldLocationsCache");
+
+                    ClassLoader loader = _context.getClassLoader();
+                    if (loader == null || loader.getParent() == null)
+                        loader = getClass().getClassLoader();
+                    else
+                        loader = loader.getParent();
+                    Class<?> clazz = loader.loadClass("org.apache.jasper.compiler.TldLocationsCache");
+                    assert clazz!=null;
                     Collection<Resource> tld_resources = (Collection<Resource>)_context.getAttribute(TLD_RESOURCES);
                    
                     Map<URI, List<String>> tldMap = new HashMap<URI, List<String>>();
@@ -205,7 +218,7 @@ public class TagLibConfiguration extends AbstractConfiguration
                 while(iter.hasNext())
                 {
                     String location = iter.next();
-                    if (location!=null && location.toLowerCase().endsWith(".tld"))
+                    if (location!=null && location.toLowerCase(Locale.ENGLISH).endsWith(".tld"))
                     {
                         if (!location.startsWith("/"))
                             location="/WEB-INF/"+location;
@@ -222,7 +235,7 @@ public class TagLibConfiguration extends AbstractConfiguration
                 String[] contents = web_inf.list();
                 for (int i=0;contents!=null && i<contents.length;i++)
                 {
-                    if (contents[i]!=null && contents[i].toLowerCase().endsWith(".tld"))
+                    if (contents[i]!=null && contents[i].toLowerCase(Locale.ENGLISH).endsWith(".tld"))
                     {
                         Resource l=web_inf.addPath(contents[i]);
                         tlds.add(l);
@@ -237,7 +250,7 @@ public class TagLibConfiguration extends AbstractConfiguration
                     String[] contents = web_inf_tlds.list();
                     for (int i=0;contents!=null && i<contents.length;i++)
                     {
-                        if (contents[i]!=null && contents[i].toLowerCase().endsWith(".tld"))
+                        if (contents[i]!=null && contents[i].toLowerCase(Locale.ENGLISH).endsWith(".tld"))
                         {
                             Resource l=web_inf_tlds.addPath(contents[i]);
                             tlds.add(l);

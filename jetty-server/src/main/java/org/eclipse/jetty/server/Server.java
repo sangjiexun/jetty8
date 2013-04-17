@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2004-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses.
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.server;
 
@@ -137,11 +142,21 @@ public class Server extends HandlerWrapper implements Attributes
     /* ------------------------------------------------------------ */
     public void setStopAtShutdown(boolean stop)
     {
-        _stopAtShutdown=stop;
+        //if we now want to stop
         if (stop)
-            ShutdownThread.register(this);
+        {
+            //and we weren't stopping before
+            if (!_stopAtShutdown)
+            {  
+                //only register to stop if we're already started (otherwise we'll do it in doStart())
+                if (isStarted()) 
+                    ShutdownThread.register(this);
+            }
+        }
         else
             ShutdownThread.deregister(this);
+        
+        _stopAtShutdown=stop;
     }
 
     /* ------------------------------------------------------------ */
@@ -247,11 +262,14 @@ public class Server extends HandlerWrapper implements Attributes
     @Override
     protected void doStart() throws Exception
     {
-        if (getStopAtShutdown())
+        if (getStopAtShutdown()) {
             ShutdownThread.register(this);
+            ShutdownMonitor.getInstance().start(); // initialize
+        }
 
         LOG.info("jetty-"+__version);
         HttpGenerator.setServerVersion(__version);
+        
         MultiException mex=new MultiException();
 
         if (_threadPool==null)
@@ -344,7 +362,7 @@ public class Server extends HandlerWrapper implements Attributes
         {
             LOG.debug("REQUEST "+target+" on "+connection);
             handle(target, request, request, response);
-            LOG.debug("RESPONSE "+target+"  "+connection.getResponse().getStatus());
+            LOG.debug("RESPONSE "+target+"  "+connection.getResponse().getStatus()+" handled="+request.isHandled());
         }
         else
             handle(target, request, request, response);
@@ -373,7 +391,7 @@ public class Server extends HandlerWrapper implements Attributes
             baseRequest.setRequestURI(null);
             baseRequest.setPathInfo(baseRequest.getRequestURI());
             if (uri.getQuery()!=null)
-                baseRequest.mergeQueryString(uri.getQuery());
+                baseRequest.mergeQueryString(uri.getQuery()); //we have to assume dispatch path and query are UTF8
         }
 
         final String target=baseRequest.getPathInfo();

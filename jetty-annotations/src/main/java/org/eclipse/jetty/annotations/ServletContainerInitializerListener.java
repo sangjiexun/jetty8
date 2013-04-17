@@ -1,38 +1,44 @@
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
+
 package org.eclipse.jetty.annotations;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
-
 import org.eclipse.jetty.annotations.AnnotationConfiguration;
 import org.eclipse.jetty.plus.annotation.ContainerInitializer;
 import org.eclipse.jetty.util.MultiMap;
+import org.eclipse.jetty.util.component.AbstractLifeCycle;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.webapp.WebAppContext;
-
-// ========================================================================
-// Copyright (c) 2006-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
 
 /**
  * ServletContainerInitializerListener
  *
  *
  */
-public class ServletContainerInitializerListener implements ServletContextListener
+public class ServletContainerInitializerListener extends AbstractLifeCycle
 {
-    WebAppContext _context = null;
+    private static final Logger LOG = Log.getLogger(ServletContainerInitializerListener.class);
+    protected WebAppContext _context = null;
     
     
     public void setWebAppContext (WebAppContext context)
@@ -40,10 +46,12 @@ public class ServletContainerInitializerListener implements ServletContextListen
         _context = context;
     }
 
+    
     /** 
-     * @see javax.servlet.ServletContextListener#contextInitialized(javax.servlet.ServletContextEvent)
+     * Call the doStart method of the ServletContainerInitializers
+     * @see org.eclipse.jetty.util.component.AbstractLifeCycle#doStart()
      */
-    public void contextInitialized(ServletContextEvent sce)
+    public void doStart()
     {
         List<ContainerInitializer> initializers = (List<ContainerInitializer>)_context.getAttribute(AnnotationConfiguration.CONTAINER_INITIALIZERS);
         MultiMap classMap = (MultiMap)_context.getAttribute(AnnotationConfiguration.CLASS_INHERITANCE_MAP);
@@ -100,16 +108,11 @@ public class ServletContainerInitializerListener implements ServletContextListen
                 }
                 catch (Exception e)
                 {
-                    //OK, how do I throw an exception such that it really stops the startup sequence?
-                    e.printStackTrace();
+                    LOG.warn(e);
+                    throw new RuntimeException(e);
                 }
             }
-
-            //TODO Email from Jan Luehe 18 August: after all ServletContainerInitializers have been
-            //called, need to check to see if there are any ServletRegistrations remaining
-            //that are "preliminary" and fail the deployment if so.
-        } 
-        
+        }       
     }
 
     
@@ -128,13 +131,14 @@ public class ServletContainerInitializerListener implements ServletContextListen
     }
     
     
+   
     /** 
-     * @see javax.servlet.ServletContextListener#contextDestroyed(javax.servlet.ServletContextEvent)
+     * Nothing to do for ServletContainerInitializers on stop
+     * @see org.eclipse.jetty.util.component.AbstractLifeCycle#doStop()
      */
-    public void contextDestroyed(ServletContextEvent sce)
+    public void doStop()
     {
-        // TODO Auto-generated method stub
-        
+       
     }
 
 }

@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2004-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses.
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.io.nio;
 
@@ -18,6 +23,7 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.util.Locale;
 
 import org.eclipse.jetty.io.AsyncEndPoint;
 import org.eclipse.jetty.io.Buffer;
@@ -37,7 +43,7 @@ public class SelectChannelEndPoint extends ChannelEndPoint implements AsyncEndPo
 {
     public static final Logger LOG=Log.getLogger("org.eclipse.jetty.io.nio");
 
-    private final boolean WORK_AROUND_JVM_BUG_6346658 = System.getProperty("os.name").toLowerCase().contains("win");
+    private final boolean WORK_AROUND_JVM_BUG_6346658 = System.getProperty("os.name").toLowerCase(Locale.ENGLISH).contains("win");
     private final SelectorManager.SelectSet _selectSet;
     private final SelectorManager _manager;
     private  SelectionKey _key;
@@ -283,12 +289,26 @@ public class SelectChannelEndPoint extends ChannelEndPoint implements AsyncEndPo
 
         if (idleTimestamp!=0 && _maxIdleTime>0)
         {
-            long idleForMs=now-idleTimestamp;
+            final long idleForMs=now-idleTimestamp;
 
             if (idleForMs>_maxIdleTime)
             {
-                onIdleExpired(idleForMs);
-                _idleTimestamp=now;
+                // Don't idle out again until onIdleExpired task completes.
+                setCheckForIdle(false);
+                _manager.dispatch(new Runnable()
+                {
+                    public void run()
+                    {
+                        try
+                        {
+                            onIdleExpired(idleForMs);
+                        }
+                        finally
+                        {
+                            setCheckForIdle(true);
+                        }
+                    }
+                });
             }
         }
     }
@@ -319,9 +339,10 @@ public class SelectChannelEndPoint extends ChannelEndPoint implements AsyncEndPo
         if (l==0 && ( header!=null && header.hasContent() || buffer!=null && buffer.hasContent() || trailer!=null && trailer.hasContent()))
         {
             synchronized (this)
-            {
-                if (_dispatched)
-                    _writable=false;
+            {   
+                _writable=false;
+                if (!_dispatched)
+                    updateKey();
             }
         }
         else if (l>0)
@@ -344,9 +365,10 @@ public class SelectChannelEndPoint extends ChannelEndPoint implements AsyncEndPo
         if (l==0 && buffer!=null && buffer.hasContent())
         {
             synchronized (this)
-            {
-                if (_dispatched)
-                    _writable=false;
+            {   
+                _writable=false;
+                if (!_dispatched)
+                    updateKey();
             }
         }
         else if (l>0)

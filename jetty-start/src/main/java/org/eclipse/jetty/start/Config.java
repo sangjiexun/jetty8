@@ -1,18 +1,20 @@
-// ========================================================================
-// Copyright (c) Webtide LLC
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
 //
-// The Eclipse Public License is available at
-// http://www.eclipse.org/legal/epl-v10.html
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
 //
-// The Apache License v2.0 is available at
-// http://www.apache.org/licenses/LICENSE-2.0.txt
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
 //
-// You may elect to redistribute this code under either of these licenses.
-// ========================================================================
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.start;
 
@@ -36,6 +38,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -267,7 +270,7 @@ public class Config
             }
             else
             {
-                String name = entry.getName().toLowerCase();
+                String name = entry.getName().toLowerCase(Locale.ENGLISH);
                 if (name.endsWith(".jar") || name.endsWith(".zip"))
                 {
                     String jar = entry.getCanonicalPath();
@@ -794,7 +797,7 @@ public class Config
                     }
 
                     // Add XML configuration
-                    if (subject.toLowerCase().endsWith(".xml"))
+                    if (subject.toLowerCase(Locale.ENGLISH).endsWith(".xml"))
                     {
                         // Config file
                         File f = new File(fixPath(file));
@@ -805,7 +808,7 @@ public class Config
                     }
 
                     // Set the main class to execute (overrides any previously set)
-                    if (subject.toLowerCase().endsWith(".class"))
+                    if (subject.toLowerCase(Locale.ENGLISH).endsWith(".class"))
                     {
                         // Class
                         String cn = expand(subject.substring(0,subject.length() - 6));
@@ -818,7 +821,7 @@ public class Config
                     }
 
                     // Add raw classpath entry
-                    if (subject.toLowerCase().endsWith(".path"))
+                    if (subject.toLowerCase(Locale.ENGLISH).endsWith(".path"))
                     {
                         // classpath (jetty.class.path?) to add to runtime classpath
                         String cn = expand(subject.substring(0,subject.length() - 5));

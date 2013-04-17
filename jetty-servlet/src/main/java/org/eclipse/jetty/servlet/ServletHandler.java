@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 1999-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.servlet;
 
@@ -32,7 +37,6 @@ import javax.servlet.AsyncContext;
 import javax.servlet.DispatcherType;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
-import javax.servlet.RequestDispatcher;
 import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -61,6 +65,7 @@ import org.eclipse.jetty.server.ServletResponseHttpWrapper;
 import org.eclipse.jetty.server.UserIdentity;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ScopedHandler;
+import org.eclipse.jetty.servlet.Holder.Source;
 import org.eclipse.jetty.util.LazyList;
 import org.eclipse.jetty.util.MultiException;
 import org.eclipse.jetty.util.MultiMap;
@@ -93,6 +98,8 @@ public class ServletHandler extends ScopedHandler
     private ContextHandler.Context _servletContext;
     private FilterHolder[] _filters=new FilterHolder[0];
     private FilterMapping[] _filterMappings;
+    private int _matchBeforeIndex = -1; //index of last programmatic FilterMapping with isMatchAfter=false
+    private int _matchAfterIndex = -1;  //index of 1st programmatic FilterMapping with isMatchAfter=true
     private boolean _filterChainsCached=true;
     private int _maxFilterChainsCacheSize=512;
     private boolean _startWithUnavailable=true;
@@ -259,44 +266,7 @@ public class ServletHandler extends ScopedHandler
             return null;
         return _servletPathMap.getMatch(pathInContext);
     }
-
-    /* ------------------------------------------------------------ */
-    /**
-     * @param uriInContext uri to get dispatcher for
-     * @return A {@link RequestDispatcher dispatcher} wrapping the resource at <code>uriInContext</code>,
-     *  or <code>null</code> if the specified uri cannot be dispatched to.
-     */
-    public RequestDispatcher getRequestDispatcher(String uriInContext)
-    {
-        if (uriInContext == null || _contextHandler==null)
-            return null;
-
-        if (!uriInContext.startsWith("/"))
-            return null;
-        
-        try
-        {
-            String query=null;
-            int q;
-            if ((q=uriInContext.indexOf('?'))>0)
-            {
-                query=uriInContext.substring(q+1);
-                uriInContext=uriInContext.substring(0,q);
-            }
-            if ((q=uriInContext.indexOf(';'))>0)
-                uriInContext=uriInContext.substring(0,q);
-
-            String pathInContext=URIUtil.canonicalPath(URIUtil.decodePath(uriInContext));
-            String uri=URIUtil.addPaths(_contextHandler.getContextPath(), uriInContext);
-            return new Dispatcher(_contextHandler, uri, pathInContext, query);
-        }
-        catch(Exception e)
-        {
-            LOG.ignore(e);
-        }
-        return null;
-    }
-
+ 
     /* ------------------------------------------------------------ */
     public ServletContext getServletContext()
     {
@@ -318,6 +288,7 @@ public class ServletHandler extends ScopedHandler
      */
     public ServletMapping getServletMapping(String pattern)
     {
+        ServletMapping theMapping = null;
         if (_servletMappings!=null)
         {
             for (ServletMapping m:_servletMappings)
@@ -328,12 +299,12 @@ public class ServletHandler extends ScopedHandler
                     for (String path:paths)
                     {
                         if (pattern.equals(path))
-                            return m;
+                            theMapping = m;
                     }
                 }
             }
         }
-        return null;
+        return theMapping;
     }
         
     /* ------------------------------------------------------------ */
@@ -518,15 +489,8 @@ public class ServletHandler extends ScopedHandler
             }
             else if (th instanceof ServletException)
             {
-                LOG.debug(th);
+                LOG.warn(th);
                 Throwable cause=((ServletException)th).getRootCause();
-                if (cause!=null)
-                    th=cause;
-            }
-            else if (th instanceof RuntimeIOException)
-            {
-                LOG.debug(th);
-                Throwable cause=(IOException)((RuntimeIOException)th).getCause();
                 if (cause!=null)
                     th=cause;
             }
@@ -561,12 +525,12 @@ public class ServletHandler extends ScopedHandler
                 {
                     UnavailableException ue = (UnavailableException)th;
                     if (ue.isPermanent())
-                        response.sendError(HttpServletResponse.SC_NOT_FOUND,th.getMessage());
+                        response.sendError(HttpServletResponse.SC_NOT_FOUND);
                     else
-                        response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE,th.getMessage());
+                        response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
                 }
                 else
-                    response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,th.getMessage());
+                    response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             }
             else
                 LOG.debug("Response already committed for handling "+th);
@@ -583,7 +547,7 @@ public class ServletHandler extends ScopedHandler
             {
                 request.setAttribute(Dispatcher.ERROR_EXCEPTION_TYPE,e.getClass());
                 request.setAttribute(Dispatcher.ERROR_EXCEPTION,e);
-                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,e.getMessage());
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             }
             else
                 LOG.debug("Response already committed for handling ",e);
@@ -963,7 +927,9 @@ public class ServletHandler extends ScopedHandler
             mapping.setFilterName(holder.getName());
             mapping.setPathSpec(pathSpec);
             mapping.setDispatcherTypes(dispatches);
-            setFilterMappings((FilterMapping[])LazyList.addToArray(getFilterMappings(), mapping, FilterMapping.class));
+            //setFilterMappings((FilterMapping[])LazyList.addToArray(getFilterMappings(), mapping, FilterMapping.class));
+            addFilterMapping(mapping);
+            
         }
         catch (RuntimeException e)
         {
@@ -1031,7 +997,8 @@ public class ServletHandler extends ScopedHandler
             mapping.setFilterName(holder.getName());
             mapping.setPathSpec(pathSpec);
             mapping.setDispatches(dispatches);
-            setFilterMappings((FilterMapping[])LazyList.addToArray(getFilterMappings(), mapping, FilterMapping.class));
+            //setFilterMappings((FilterMapping[])LazyList.addToArray(getFilterMappings(), mapping, FilterMapping.class));
+            addFilterMapping(mapping);
         }
         catch (RuntimeException e)
         {
@@ -1070,7 +1037,8 @@ public class ServletHandler extends ScopedHandler
         if (filter != null)
             setFilters((FilterHolder[])LazyList.addToArray(getFilters(), filter, FilterHolder.class));
         if (filterMapping != null)
-            setFilterMappings((FilterMapping[])LazyList.addToArray(getFilterMappings(), filterMapping, FilterMapping.class));
+            //setFilterMappings((FilterMapping[])LazyList.addToArray(getFilterMappings(), filterMapping, FilterMapping.class));
+            addFilterMapping(filterMapping);
     }
     
     /* ------------------------------------------------------------ */  
@@ -1090,8 +1058,42 @@ public class ServletHandler extends ScopedHandler
     public void addFilterMapping (FilterMapping mapping)
     {
         if (mapping != null)
-            setFilterMappings((FilterMapping[])LazyList.addToArray(getFilterMappings(), mapping, FilterMapping.class));
+        { 
+            Source source = (mapping.getFilterHolder()==null?null:mapping.getFilterHolder().getSource());
+            FilterMapping[] mappings =getFilterMappings();
+            if (mappings==null || mappings.length==0)
+            {
+                setFilterMappings(insertFilterMapping(mapping,0,false));
+                if (source != null && source == Source.JAVAX_API)
+                    _matchAfterIndex = 0;
+            }
+            else
+            {
+                //there are existing entries. If this is a programmatic filtermapping, it is added at the end of the list.
+                //If this is a normal filtermapping, it is inserted after all the other filtermappings (matchBefores and normals), 
+                //but before the first matchAfter filtermapping.
+                if (source != null && Source.JAVAX_API == source)
+                {
+                    setFilterMappings(insertFilterMapping(mapping,mappings.length-1, false));
+                    if (_matchAfterIndex < 0)
+                        _matchAfterIndex = getFilterMappings().length-1;
+                }
+                else
+                {
+                    //insert non-programmatic filter mappings before any matchAfters, if any
+                    if (_matchAfterIndex < 0)
+                        setFilterMappings(insertFilterMapping(mapping,mappings.length-1, false));
+                    else
+                    {
+                        FilterMapping[] new_mappings = insertFilterMapping(mapping, _matchAfterIndex, true);
+                        ++_matchAfterIndex;
+                        setFilterMappings(new_mappings);
+                    }
+                }
+            }
+        }
     }
+    
     
     /* ------------------------------------------------------------ */
     /** Convenience method to add a preconstructed FilterMapping
@@ -1101,20 +1103,99 @@ public class ServletHandler extends ScopedHandler
     {
         if (mapping != null)
         {
-            FilterMapping[] mappings =getFilterMappings();
+            Source source = mapping.getFilterHolder().getSource();
+            
+            FilterMapping[] mappings = getFilterMappings();
             if (mappings==null || mappings.length==0)
-                setFilterMappings(new FilterMapping[] {mapping});
+            {
+                setFilterMappings(insertFilterMapping(mapping, 0, false));
+                if (source != null && Source.JAVAX_API == source)
+                    _matchBeforeIndex = 0;
+            }
             else
             {
+                if (source != null && Source.JAVAX_API == source)
+                {
+                    //programmatically defined filter mappings are prepended to mapping list in the order
+                    //in which they were defined. In other words, insert this mapping at the tail of the 
+                    //programmatically added filter mappings, BEFORE the first web.xml defined filter mapping.
 
-                FilterMapping[] new_mappings=new FilterMapping[mappings.length+1];
-                System.arraycopy(mappings,0,new_mappings,1,mappings.length);
-                new_mappings[0]=mapping;
-                setFilterMappings(new_mappings);
+                    if (_matchBeforeIndex < 0)
+                    { 
+                        //no programmatically defined prepended filter mappings yet, prepend this one
+                        _matchBeforeIndex = 0;
+                        FilterMapping[] new_mappings = insertFilterMapping(mapping, 0, true);
+                        setFilterMappings(new_mappings);
+                    }
+                    else
+                    {
+                        FilterMapping[] new_mappings = insertFilterMapping(mapping,_matchBeforeIndex, false);
+                        ++_matchBeforeIndex;
+                        setFilterMappings(new_mappings);
+                    }
+                }
+                else
+                {
+                    //non programmatically defined, just prepend to list
+                    FilterMapping[] new_mappings = insertFilterMapping(mapping, 0, true);
+                    setFilterMappings(new_mappings);
+                }
+                
+                //adjust matchAfterIndex ptr to take account of the mapping we just prepended
+                if (_matchAfterIndex >= 0)
+                    ++_matchAfterIndex;
             }
         }
     }
+    
+    
+    
+    /**
+     * Insert a filtermapping in the list
+     * @param mapping the FilterMapping to add
+     * @param pos the position in the existing arry at which to add it
+     * @param before if true, insert before  pos, if false insert after it
+     * @return
+     */
+    protected FilterMapping[] insertFilterMapping (FilterMapping mapping, int pos, boolean before)
+    {
+        if (pos < 0)
+            throw new IllegalArgumentException("FilterMapping insertion pos < 0");
+        
+        FilterMapping[] mappings = getFilterMappings();
+        if (mappings==null || mappings.length==0)
+        {
+            return new FilterMapping[] {mapping};
+        }
+        FilterMapping[] new_mappings = new FilterMapping[mappings.length+1];
 
+        if (before)
+        {
+            //copy existing filter mappings up to but not including the pos
+            System.arraycopy(mappings,0,new_mappings,0,pos);
+
+            //add in the new mapping
+            new_mappings[pos] = mapping; 
+
+            //copy the old pos mapping and any remaining existing mappings
+            System.arraycopy(mappings,pos,new_mappings,pos+1, mappings.length-pos);
+
+        }
+        else
+        {
+            //copy existing filter mappings up to and including the pos
+            System.arraycopy(mappings,0,new_mappings,0,pos+1);
+            //add in the new mapping after the pos
+            new_mappings[pos+1] = mapping;   
+
+            //copy the remaining existing mappings
+            if (mappings.length > pos+1)
+                System.arraycopy(mappings,pos+1,new_mappings,pos+2, mappings.length-(pos+1));
+        }
+        return new_mappings;
+    }
+    
+    
     /* ------------------------------------------------------------ */
     protected synchronized void updateNameMappings()
     {   

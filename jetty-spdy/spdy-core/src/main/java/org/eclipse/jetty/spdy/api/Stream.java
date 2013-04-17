@@ -1,22 +1,25 @@
-/*
- * Copyright (c) 2012 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.spdy.api;
 
 import java.nio.channels.WritePendingException;
+import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -84,6 +87,29 @@ public interface Stream
      * @return the session this stream is associated to
      */
     public Session getSession();
+
+    /**
+     * <p>Initiate a unidirectional spdy pushstream associated to this stream asynchronously<p>
+     * <p>Callers may use the returned future to get the pushstream once it got created</p>
+     *
+     * @param synInfo the metadata to send on stream creation
+     * @return a future containing the stream once it got established
+     * @see #syn(SynInfo, long, TimeUnit, Handler)
+     */
+    public Future<Stream> syn(SynInfo synInfo);
+
+    /**
+     * <p>Initiate a unidirectional spdy pushstream associated to this stream asynchronously<p>
+     * <p>Callers may pass a non-null completion handler to be notified of when the
+     * pushstream has been established.</p>
+     *
+     * @param synInfo the metadata to send on stream creation
+     * @param timeout  the operation's timeout
+     * @param unit     the timeout's unit
+     * @param handler   the completion handler that gets notified once the pushstream is established
+     * @see #syn(SynInfo)
+     */
+    public void syn(SynInfo synInfo, long timeout, TimeUnit unit, Handler<Stream> handler);
 
     /**
      * <p>Sends asynchronously a SYN_REPLY frame in response to a SYN_STREAM frame.</p>
@@ -162,6 +188,16 @@ public interface Stream
     public void headers(HeadersInfo headersInfo, long timeout, TimeUnit unit, Handler<Void> handler);
 
     /**
+     * @return whether this stream is unidirectional or not
+     */
+    public boolean isUnidirectional();
+
+    /**
+     * @return whether this stream has been reset
+     */
+    public boolean isReset();
+
+    /**
      * @return whether this stream has been closed by both parties
      * @see #isHalfClosed()
      */
@@ -169,9 +205,7 @@ public interface Stream
 
     /**
      * @return whether this stream has been closed by one party only
-     * @see #isClosed()     * @param timeout     the timeout for the stream creation
-     * @param unit        the timeout's unit
-
+     * @see #isClosed()
      */
     public boolean isHalfClosed();
 
@@ -196,4 +230,15 @@ public interface Stream
      * @see #setAttribute(String, Object)
      */
     public Object removeAttribute(String key);
+
+    /**
+     * @return the associated parent stream or null if this is not an associated stream
+     */
+    public Stream getAssociatedStream();
+
+    /**
+     * @return associated child streams or an empty set if no associated streams exist
+     */
+    public Set<Stream> getPushedStreams();
+
 }

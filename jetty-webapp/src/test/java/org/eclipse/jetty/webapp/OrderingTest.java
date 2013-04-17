@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2006-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.webapp;
 
@@ -839,6 +844,44 @@ public class OrderingTest
         String[] outcomes = {"Bplain1plain2AC"};
 
         List<Resource> orderedList = metaData._ordering.order(resources);
+        String result = "";
+        for (Resource r:orderedList)
+           result+=(((TestResource)r)._name);
+        
+        if (!checkResult(result, outcomes))
+            fail ("No outcome matched "+result);
+    }
+    
+    @Test
+    public void testRelativeOrderingWithPlainJars2 ()
+    throws Exception
+    {
+        //web.xml has no ordering, jar A has fragment after others, jar B is plain, jar C is plain
+        List<Resource> resources = new ArrayList<Resource>();
+        WebAppContext wac = new WebAppContext();
+        MetaData metaData = new MetaData();
+        metaData._ordering = new RelativeOrdering(metaData);
+        
+        //A has after others
+        TestResource jar1 = new TestResource("A");
+        resources.add(jar1);
+        TestResource r1 = new TestResource("A/web-fragment.xml");
+        FragmentDescriptor f1 = new FragmentDescriptor(r1);
+        f1._name = "A";
+        metaData._webFragmentNameMap.put(f1._name, f1);
+        metaData._webFragmentResourceMap.put(jar1, f1);
+        f1._otherType = FragmentDescriptor.OtherType.After;
+        
+        //No fragment jar B
+        TestResource r4 = new TestResource("plainB");
+        resources.add(r4);
+        
+        //No fragment jar C
+        TestResource r5 = new TestResource("plainC");
+        resources.add(r5);
+        
+        List<Resource> orderedList = metaData._ordering.order(resources);
+        String[] outcomes = {"plainBplainCA"};
         String result = "";
         for (Resource r:orderedList)
            result+=(((TestResource)r)._name);

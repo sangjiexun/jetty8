@@ -1,21 +1,27 @@
-// ========================================================================
-// Copyright (c) 2004-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.io;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 
 
 /**
@@ -24,7 +30,7 @@ import java.io.OutputStream;
  * This is a byte buffer that is designed to work like a FIFO for bytes. Puts and Gets operate on different
  * pointers into the buffer and the valid _content of the buffer is always between the getIndex and the putIndex.
  * 
- * This buffer interface is designed to be similar, but not dependant on the java.nio buffers, which may
+ * This buffer interface is designed to be similar, but not dependent on the java.nio buffers, which may
  * be used to back an implementation of this Buffer. The main difference is that NIO buffer after a put have 
  * their valid _content before the position and a flip is required to access that data.
  *
@@ -56,14 +62,14 @@ public interface Buffer extends Cloneable
     byte[] asArray();
     
     /** 
-     * Get the unerlying buffer. If this buffer wraps a backing buffer.
+     * Get the underlying buffer. If this buffer wraps a backing buffer.
      * @return The root backing buffer or this if there is no backing buffer;
      */
     Buffer buffer();
     
     /**
      * 
-     * @return a non volitile version of this <code>Buffer</code> value
+     * @return a non volatile version of this <code>Buffer</code> value
      */
     Buffer asNonVolatileBuffer();
 
@@ -360,7 +366,10 @@ public interface Buffer extends Cloneable
     /* ------------------------------------------------------------ */
     String toString(String charset);
     
-    /* 
+    /* ------------------------------------------------------------ */
+    String toString(Charset charset);
+
+    /*
      * Buffers implementing this interface should be compared with case insensitive equals
      *
      */

@@ -1,21 +1,27 @@
-// ========================================================================
-// Copyright (c) 2004-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.io;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 
 import org.eclipse.jetty.util.TypeUtil;
 import org.eclipse.jetty.util.log.Log;
@@ -631,6 +637,23 @@ public abstract class AbstractBuffer implements Buffer
                 return new String(bytes,getIndex(),length(),charset);
             return new String(asArray(), 0, length(),charset);
             
+        }
+        catch(Exception e)
+        {
+            LOG.warn(e);
+            return new String(asArray(), 0, length());
+        }
+    }
+
+    /* ------------------------------------------------------------ */
+    public String toString(Charset charset)
+    {
+        try
+        {
+            byte[] bytes=array();
+            if (bytes!=null)
+                return new String(bytes,getIndex(),length(),charset);
+            return new String(asArray(), 0, length(),charset);
         }
         catch(Exception e)
         {

@@ -1,18 +1,21 @@
-/*******************************************************************************
- * Copyright (c) 2011 Intalio, Inc.
- * ======================================================================
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * and Apache License v2.0 which accompanies this distribution.
- *
- *   The Eclipse Public License is available at
- *   http://www.eclipse.org/legal/epl-v10.html
- *
- *   The Apache License v2.0 is available at
- *   http://www.opensource.org/licenses/apache2.0.php
- *
- * You may elect to redistribute this code under either of these licenses.
- *******************************************************************************/
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
+
 package org.eclipse.jetty.websocket;
 
 import java.io.EOFException;
@@ -25,6 +28,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
 import javax.net.ssl.SSLEngine;
 
 import org.eclipse.jetty.http.HttpFields;
@@ -386,7 +390,7 @@ public class WebSocketClientFactory extends AggregateLifeCycle
                         _accept = value.toString();
                 }
 
-                @Override
+                @Override // TODO simone says shouldn't be needed
                 public void startRequest(Buffer method, Buffer url, Buffer version) throws IOException
                 {
                     if (_error == null)
@@ -394,7 +398,7 @@ public class WebSocketClientFactory extends AggregateLifeCycle
                     _endp.close();
                 }
 
-                @Override
+                @Override // TODO simone says shouldn't be needed
                 public void content(Buffer ref) throws IOException
                 {
                     if (_error == null)
@@ -512,6 +516,7 @@ public class WebSocketClientFactory extends AggregateLifeCycle
 
         private WebSocketConnection newWebSocketConnection() throws IOException
         {
+            __log.debug("newWebSocketConnection()");
             return new WebSocketClientConnection(
                     _future._client.getFactory(),
                     _future.getWebSocket(),

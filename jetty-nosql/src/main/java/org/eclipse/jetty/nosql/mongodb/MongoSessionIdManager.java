@@ -1,16 +1,22 @@
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
+
 package org.eclipse.jetty.nosql.mongodb;
-//========================================================================
-//Copyright (c) 2011 Intalio, Inc.
-//------------------------------------------------------------------------
-//All rights reserved. This program and the accompanying materials
-//are made available under the terms of the Eclipse Public License v1.0
-//and Apache License v2.0 which accompanies this distribution.
-//The Eclipse Public License is available at
-//http://www.eclipse.org/legal/epl-v10.html
-//The Apache License v2.0 is available at
-//http://www.opensource.org/licenses/apache2.0.php
-//You may elect to redistribute this code under either of these licenses.
-//========================================================================
 
 
 import java.net.UnknownHostException;
@@ -210,7 +216,7 @@ public class MongoSessionIdManager extends AbstractSessionIdManager
         BasicDBObject invalidQuery = new BasicDBObject();
 
         invalidQuery.put(MongoSessionManager.__ACCESSED, new BasicDBObject("$lt",System.currentTimeMillis() - _purgeInvalidAge));
-        invalidQuery.put(MongoSessionManager.__VALID, __valid_false);
+        invalidQuery.put(MongoSessionManager.__VALID, false);
         
         DBCursor oldSessions = _sessions.find(invalidQuery, new BasicDBObject(MongoSessionManager.__ID, 1));
 
@@ -228,9 +234,9 @@ public class MongoSessionIdManager extends AbstractSessionIdManager
             BasicDBObject validQuery = new BasicDBObject();
 
             validQuery.put(MongoSessionManager.__ACCESSED,new BasicDBObject("$lt",System.currentTimeMillis() - _purgeValidAge));
-            validQuery.put(MongoSessionManager.__VALID, __valid_false);
+            validQuery.put(MongoSessionManager.__VALID, true);
 
-            oldSessions = _sessions.find(invalidQuery,new BasicDBObject(MongoSessionManager.__ID,1));
+            oldSessions = _sessions.find(validQuery,new BasicDBObject(MongoSessionManager.__ID,1));
 
             for (DBObject session : oldSessions)
             {
@@ -404,7 +410,8 @@ public class MongoSessionIdManager extends AbstractSessionIdManager
                         purge();
                     }
                 };
-                _purgeTimer.schedule(_purgeTask,_purgeDelay);
+               
+                _purgeTimer.schedule(_purgeTask,0,_purgeDelay);
             }
         }
     }

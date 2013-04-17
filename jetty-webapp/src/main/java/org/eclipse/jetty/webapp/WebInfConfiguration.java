@@ -1,3 +1,21 @@
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
+
 package org.eclipse.jetty.webapp;
 
 import java.io.File;
@@ -8,6 +26,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 import org.eclipse.jetty.server.Connector;
@@ -369,10 +388,6 @@ public class WebInfConfiguration extends AbstractConfiguration
             if (!isTempWorkDirectory(tmpDir))
             {
                 tmpDir.deleteOnExit();
-                //TODO why is this here?
-                File sentinel = new File(tmpDir, ".active");
-                if(!sentinel.exists())
-                    sentinel.mkdir();
             }
 
             if(LOG.isDebugEnabled())
@@ -428,7 +443,7 @@ public class WebInfConfiguration extends AbstractConfiguration
                 {
                     // look for a sibling like "foo/" to a "foo.war"
                     File warfile=Resource.newResource(war).getFile();
-                    if (warfile!=null && warfile.getName().toLowerCase().endsWith(".war"))
+                    if (warfile!=null && warfile.getName().toLowerCase(Locale.ENGLISH).endsWith(".war"))
                     {
                         File sibling = new File(warfile.getParent(),warfile.getName().substring(0,warfile.getName().length()-4));
                         if (sibling.exists() && sibling.isDirectory() && sibling.canWrite())
@@ -448,24 +463,32 @@ public class WebInfConfiguration extends AbstractConfiguration
                 }
                 else
                 {
+                    //Use a sentinel file that will exist only whilst the extraction is taking place.
+                    //This will help us detect interrupted extractions.
+                    File extractionLock = new File (context.getTempDirectory(), ".extract_lock");
+                   
                     if (!extractedWebAppDir.exists())
                     {
                         //it hasn't been extracted before so extract it
+                        extractionLock.createNewFile();  
                         extractedWebAppDir.mkdir();
-                        LOG.info("Extract " + web_app + " to " + extractedWebAppDir);
+                        LOG.info("Extract " + web_app + " to " + extractedWebAppDir);                                     
                         Resource jar_web_app = JarResource.newJarResource(web_app);
                         jar_web_app.copyTo(extractedWebAppDir);
+                        extractionLock.delete();
                     }
                     else
                     {
-                        //only extract if the war file is newer
-                        if (web_app.lastModified() > extractedWebAppDir.lastModified())
+                        //only extract if the war file is newer, or a .extract_lock file is left behind meaning a possible partial extraction
+                        if (web_app.lastModified() > extractedWebAppDir.lastModified() || extractionLock.exists())
                         {
+                            extractionLock.createNewFile();
                             IO.delete(extractedWebAppDir);
                             extractedWebAppDir.mkdir();
                             LOG.info("Extract " + web_app + " to " + extractedWebAppDir);
                             Resource jar_web_app = JarResource.newJarResource(web_app);
                             jar_web_app.copyTo(extractedWebAppDir);
+                            extractionLock.delete();
                         }
                     }
                 } 
@@ -687,7 +710,7 @@ public class WebInfConfiguration extends AbstractConfiguration
                 try 
                 {
                     Resource file = web_inf_lib.addPath(files[f]);
-                    String fnlc = file.getName().toLowerCase();
+                    String fnlc = file.getName().toLowerCase(Locale.ENGLISH);
                     int dot = fnlc.lastIndexOf('.');
                     String extension = (dot < 0 ? null : fnlc.substring(dot));
                     if (extension != null && (extension.equals(".jar") || extension.equals(".zip")))

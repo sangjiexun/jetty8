@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2004-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses.
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.servlet;
 
@@ -51,6 +56,7 @@ import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.toolchain.test.MavenTestingUtils;
+import org.eclipse.jetty.util.TypeUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -105,6 +111,44 @@ public class DispatcherTest
             "\r\n";
 
         String responses = _connector.getResponses("GET /context/ForwardServlet?do=assertforward&do=more&test=1 HTTP/1.1\n" + "Host: localhost\n\n");
+
+        assertEquals(expected, responses);
+    }
+    
+ 
+
+   @Test public void testForwardNonUTF8() throws Exception
+    {
+        _contextHandler.addServlet(ForwardNonUTF8Servlet.class, "/ForwardServlet/*");
+        _contextHandler.addServlet(AssertNonUTF8ForwardServlet.class, "/AssertForwardServlet/*");
+        
+        String expected=
+            "HTTP/1.1 200 OK\r\n"+
+            "Content-Type: text/html\r\n"+
+            "Content-Length: 0\r\n"+
+            "\r\n";
+        String responses = _connector.getResponses("GET /context/ForwardServlet?do=assertforward&foreign=%d2%e5%ec%ef%e5%f0%e0%f2%f3%f0%e0&test=1 HTTP/1.1\n" + "Host: localhost\n\n");
+
+        assertEquals(expected, responses);
+    }
+    
+    @Test
+    public void testForwardWithParam() throws Exception
+    {
+        _contextHandler.addServlet(ForwardServlet.class, "/ForwardServlet/*");
+        _contextHandler.addServlet(EchoURIServlet.class, "/EchoURI/*");
+
+        String expected=
+            "HTTP/1.1 200 OK\r\n"+
+            "Content-Type: text/plain\r\n"+
+            "Content-Length: 54\r\n"+
+            "\r\n"+
+            "/context\r\n"+
+            "/EchoURI\r\n"+
+            "/x x\r\n"+
+            "/context/EchoURI/x%20x;a=1\r\n";
+
+        String responses = _connector.getResponses("GET /context/ForwardServlet;ignore=true?do=req.echo&uri=EchoURI%2Fx%2520x%3Ba=1%3Fb=2 HTTP/1.1\n" + "Host: localhost\n\n");
 
         assertEquals(expected, responses);
     }
@@ -280,8 +324,25 @@ public class DispatcherTest
                 dispatcher = getServletContext().getRequestDispatcher("/IncludeServlet/includepath?do=assertforwardinclude");
             else if(request.getParameter("do").equals("assertincludeforward"))
                 dispatcher = getServletContext().getRequestDispatcher("/AssertIncludeForwardServlet/assertpath?do=end");
+          
             else if(request.getParameter("do").equals("assertforward"))
                 dispatcher = getServletContext().getRequestDispatcher("/AssertForwardServlet?do=end&do=the");
+            else if(request.getParameter("do").equals("ctx.echo"))
+                dispatcher = getServletContext().getRequestDispatcher(request.getParameter("uri"));
+            else if(request.getParameter("do").equals("req.echo"))
+                dispatcher = request.getRequestDispatcher(request.getParameter("uri"));
+            dispatcher.forward(request, response);
+        }
+    }
+    
+    
+    public static class ForwardNonUTF8Servlet extends HttpServlet implements Servlet
+    {
+        protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+        {
+            RequestDispatcher dispatcher = null;
+            request.setAttribute("org.eclipse.jetty.server.Request.queryEncoding", "cp1251");          
+            dispatcher = getServletContext().getRequestDispatcher("/AssertForwardServlet?do=end&else=%D0%B2%D1%8B%D0%B1%D1%80%D0%B0%D0%BD%D0%BE%3D%D0%A2%D0%B5%D0%BC%D0%BF%D0%B5%D1%80%D0%B0%D1%82%D1%83%D1%80%D0%B0");
             dispatcher.forward(request, response);
         }
     }
@@ -465,6 +526,19 @@ public class DispatcherTest
         }
     }
     
+    public static class EchoURIServlet extends HttpServlet implements Servlet
+    {
+        protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+        {
+            response.setContentType("text/plain");
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.getOutputStream().println(request.getContextPath());
+            response.getOutputStream().println(request.getServletPath());
+            response.getOutputStream().println(request.getPathInfo());
+            response.getOutputStream().println(request.getRequestURI());
+        }
+    }
+    
     public static class AssertForwardServlet extends HttpServlet implements Servlet
     {
         protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
@@ -491,6 +565,45 @@ public class DispatcherTest
             response.setStatus(HttpServletResponse.SC_OK);
         }
     }
+    
+    
+    
+    public static class AssertNonUTF8ForwardServlet extends HttpServlet implements Servlet
+    {
+        protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+        {
+            byte[] cp1251_bytes = TypeUtil.fromHexString("d2e5ecefe5f0e0f2f3f0e0");
+            String expectedCP1251String = new String(cp1251_bytes, "cp1251");
+            
+            assertEquals( "/context/ForwardServlet", request.getAttribute(Dispatcher.FORWARD_REQUEST_URI));
+            assertEquals( "/context", request.getAttribute(Dispatcher.FORWARD_CONTEXT_PATH) );
+            assertEquals( "/ForwardServlet", request.getAttribute(Dispatcher.FORWARD_SERVLET_PATH));
+            assertEquals( null, request.getAttribute(Dispatcher.FORWARD_PATH_INFO));
+            assertEquals( "do=assertforward&foreign=%d2%e5%ec%ef%e5%f0%e0%f2%f3%f0%e0&test=1", request.getAttribute(Dispatcher.FORWARD_QUERY_STRING) );
+
+            List<String> expectedAttributeNames = Arrays.asList(Dispatcher.FORWARD_REQUEST_URI, Dispatcher.FORWARD_CONTEXT_PATH,
+                    Dispatcher.FORWARD_SERVLET_PATH, Dispatcher.FORWARD_QUERY_STRING);
+            List<String> requestAttributeNames = Collections.list(request.getAttributeNames());
+            assertTrue(requestAttributeNames.containsAll(expectedAttributeNames));
+
+            assertEquals(null, request.getPathInfo());
+            assertEquals(null, request.getPathTranslated());           
+            assertTrue(request.getQueryString().startsWith("do=end&else=%D0%B2%D1%8B%D0%B1%D1%80%D0%B0%D0%BD%D0%BE%3D%D0%A2%D0%B5%D0%BC%D0%BF%D0%B5%D1%80%D0%B0%D1%82%D1%83%D1%80%D0%B0&test=1&foreign="));                                                  
+            
+            String[] vals = request.getParameterValues("foreign");
+            assertTrue(vals!=null);
+            assertEquals(1, vals.length);
+            assertEquals(expectedCP1251String, vals[0]);
+            
+            assertEquals("/context/AssertForwardServlet", request.getRequestURI());
+            assertEquals("/context", request.getContextPath());
+            assertEquals("/AssertForwardServlet", request.getServletPath());
+
+            response.setContentType("text/html");
+            response.setStatus(HttpServletResponse.SC_OK);
+        }
+    }
+    
 
     public static class AssertIncludeServlet extends HttpServlet implements Servlet
     {

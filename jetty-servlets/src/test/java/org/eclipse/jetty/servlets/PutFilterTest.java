@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2004-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses.
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.servlets;
 
@@ -25,6 +30,7 @@ import java.util.EnumSet;
 import javax.servlet.DispatcherType;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
@@ -58,7 +64,7 @@ public class PutFilterTest
         FilterHolder holder = tester.addFilter(PutFilter.class,"/*",EnumSet.of(DispatcherType.REQUEST));
         holder.setInitParameter("delAllowed","true");
         // Bloody Windows does not allow file renaming
-        if (!System.getProperty("os.name").toLowerCase().contains("windows"))
+        if (!System.getProperty("os.name").toLowerCase(Locale.ENGLISH).contains("windows"))
             holder.setInitParameter("putAtomic","true");
         tester.start();
     }

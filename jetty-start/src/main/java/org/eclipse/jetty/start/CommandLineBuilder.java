@@ -1,3 +1,21 @@
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
+
 package org.eclipse.jetty.start;
 
 import java.util.ArrayList;
@@ -23,7 +41,8 @@ public class CommandLineBuilder
      */
     public void addArg(String arg)
     {
-        args.add(quote(arg));
+        if (arg != null)
+            args.add(quote(arg));
     }
 
     /**
@@ -66,7 +85,8 @@ public class CommandLineBuilder
      */
     public void addRawArg(String arg)
     {
-        args.add(arg);
+        if (arg != null)
+            args.add(arg);
     }
 
     public List<String> getArgs()
@@ -88,7 +108,7 @@ public class CommandLineBuilder
             return arg;
         }
         StringBuilder buf = new StringBuilder();
-//        buf.append('"');
+        // buf.append('"');
         boolean escaped = false;
         for (char c : arg.toCharArray())
         {
@@ -99,7 +119,7 @@ public class CommandLineBuilder
             escaped = (c == '\\');
             buf.append(c);
         }
-//        buf.append('"');
+        // buf.append('"');
         return buf.toString();
     }
 
@@ -115,7 +135,7 @@ public class CommandLineBuilder
             {
                 buf.append(' ');
             }
-            buf.append(arg);
+            buf.append(quote(arg));
             delim = true;
         }
 

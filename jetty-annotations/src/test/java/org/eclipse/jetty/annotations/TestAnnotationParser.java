@@ -1,15 +1,21 @@
-// ========================================================================
-// Copyright (c) 2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses.
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
+
 package org.eclipse.jetty.annotations;
 
 import java.util.Arrays;
@@ -35,6 +41,9 @@ public class TestAnnotationParser
         {
             private List<String> methods = Arrays.asList("a", "b", "c", "d", "l");
 
+           
+            
+            
             public void handleClass(String className, int version, int access, String signature, String superName, String[] interfaces, String annotation,
                                     List<Value> values)
             {
@@ -75,9 +84,15 @@ public class TestAnnotationParser
                 assertTrue(methods.contains(methodName));
                 assertEquals("org.eclipse.jetty.annotations.Sample", annotation);
             }
+
+            @Override
+            public String getAnnotationName()
+            {
+                return "org.eclipse.jetty.annotations.Sample";
+            }
         }
 
-        parser.registerAnnotationHandler("org.eclipse.jetty.annotations.Sample", new SampleAnnotationHandler());
+        parser.registerHandler(new SampleAnnotationHandler());
 
         long start = System.currentTimeMillis();
         parser.parse(classNames, new ClassNameResolver ()
@@ -134,9 +149,17 @@ public class TestAnnotationParser
                     System.err.println(anv.toString());
                 }
             }
+
+            @Override
+            public String getAnnotationName()
+            {
+                return "org.eclipse.jetty.annotations.Multi";
+            }
+            
+            
         }
 
-        parser.registerAnnotationHandler("org.eclipse.jetty.annotations.Multi", new MultiAnnotationHandler());
+        parser.registerHandler(new MultiAnnotationHandler());
         parser.parse(classNames, null);
     }
 }

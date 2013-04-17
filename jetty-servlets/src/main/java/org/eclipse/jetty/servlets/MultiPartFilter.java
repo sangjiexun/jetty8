@@ -1,15 +1,21 @@
-// ========================================================================
-// Copyright (c) 1996-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
+
 package org.eclipse.jetty.servlets;
 
 import java.io.BufferedInputStream;
@@ -28,6 +34,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.servlet.Filter;
@@ -49,7 +56,8 @@ import org.eclipse.jetty.util.MultiMap;
 import org.eclipse.jetty.util.MultiPartInputStream;
 import org.eclipse.jetty.util.QuotedStringTokenizer;
 import org.eclipse.jetty.util.StringUtil;
-import org.eclipse.jetty.util.TypeUtil;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
 
 /* ------------------------------------------------------------ */
 /**
@@ -77,8 +85,9 @@ import org.eclipse.jetty.util.TypeUtil;
  */
 public class MultiPartFilter implements Filter
 {
+    private static final Logger LOG = Log.getLogger(MultiPartFilter.class);
     public final static String CONTENT_TYPE_SUFFIX=".org.eclipse.jetty.servlet.contentType";
-    private final static String FILES ="org.eclipse.jetty.servlet.MultiPartFilter.files";
+    private final static String MULTIPART = "org.eclipse.jetty.servlet.MultiPartFile.multiPartInputStream";
     private File tempdir;
     private boolean _deleteFiles;
     private ServletContext _context;
@@ -125,7 +134,7 @@ public class MultiPartFilter implements Filter
             chain.doFilter(request,response);
             return;
         }
-        
+
         InputStream in = new BufferedInputStream(request.getInputStream());
         String content_type=srequest.getContentType();
         
@@ -143,7 +152,8 @@ public class MultiPartFilter implements Filter
         
         MultipartConfigElement config = new MultipartConfigElement(tempdir.getCanonicalPath(), _maxFileSize, _maxRequestSize, _fileOutputBuffer);
         MultiPartInputStream mpis = new MultiPartInputStream(in, content_type, config, tempdir);
-        
+        mpis.setDeleteOnExit(_deleteFiles);
+        request.setAttribute(MULTIPART, mpis);
 
         try
         {
@@ -163,18 +173,6 @@ public class MultiPartFilter implements Filter
                             params.add(mp.getName(), mp.getContentDispositionFilename());
                             if (mp.getContentType() != null)
                                 params.add(mp.getName()+CONTENT_TYPE_SUFFIX, mp.getContentType());
-                        }
-                        if (_deleteFiles)
-                        {
-                            mp.getFile().deleteOnExit();
-
-                            ArrayList files = (ArrayList)request.getAttribute(FILES);
-                            if (files==null)
-                            {
-                                files=new ArrayList();
-                                request.setAttribute(FILES,files);
-                            }
-                            files.add(mp.getFile());
                         }
                     }
                     else
@@ -196,34 +194,30 @@ public class MultiPartFilter implements Filter
             deleteFiles(request);
         }
     }
-
-    private void deleteFiles(ServletRequest request)
-    {
-        ArrayList files = (ArrayList)request.getAttribute(FILES);
-        if (files!=null)
-        {
-            Iterator iter = files.iterator();
-            while (iter.hasNext())
-            {
-                File file=(File)iter.next();
-                try
-                {
-                    file.delete();
-                }
-                catch(Exception e)
-                {
-                    _context.log("failed to delete "+file,e);
-                }
-            }
-        }
-    }
+    
     
     /* ------------------------------------------------------------ */
-    private String value(String nameEqualsValue)
+    private void deleteFiles(ServletRequest request)
     {
-        return nameEqualsValue.substring(nameEqualsValue.indexOf('=')+1).trim();
+        if (!_deleteFiles)
+            return;
+        
+        MultiPartInputStream mpis = (MultiPartInputStream)request.getAttribute(MULTIPART);
+        if (mpis != null)
+        {
+            try
+            {
+                mpis.deleteParts();
+            }
+            catch (Exception e)
+            {
+                _context.log("Error deleting multipart tmp files", e);
+            }
+        }
+        request.removeAttribute(MULTIPART);
     }
-
+    
+ 
     /* ------------------------------------------------------------------------------- */
     /**
      * @see javax.servlet.Filter#destroy()
@@ -294,11 +288,12 @@ public class MultiPartFilter implements Filter
         @Override
         public Map getParameterMap()
         {
-            Map<String, String> cmap = new HashMap<String,String>();
+            Map<String, String[]> cmap = new HashMap<String,String[]>();
             
             for ( Object key : _params.keySet() )
             {
-                cmap.put((String)key,getParameter((String)key));
+                String[] a = LazyList.toStringArray(getParameter((String)key));
+                cmap.put((String)key,a);
             }
             
             return Collections.unmodifiableMap(cmap);

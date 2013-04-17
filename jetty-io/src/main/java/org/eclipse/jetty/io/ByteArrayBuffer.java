@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2004-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.io;
 
@@ -26,6 +31,9 @@ import org.eclipse.jetty.util.StringUtil;
  */
 public class ByteArrayBuffer extends AbstractBuffer
 {
+    // Set a maximum size to a write for the writeTo method, to ensure that very large content is not
+    // written as a single write (which may fall foul to write timeouts if consumed slowly).
+    final static int MAX_WRITE=Integer.getInteger("org.eclipse.jetty.io.ByteArrayBuffer.MAX_WRITE",128*1024);
     final protected byte[] _bytes;
 
     protected ByteArrayBuffer(int size, int access, boolean isVolatile)
@@ -351,7 +359,20 @@ public class ByteArrayBuffer extends AbstractBuffer
     public void writeTo(OutputStream out)
         throws IOException
     {
-        out.write(_bytes,getIndex(),length());
+        int len=length();
+        if (MAX_WRITE>0 && len>MAX_WRITE)
+        {
+            int off=getIndex();
+            while(len>0)
+            {
+                int c=len>MAX_WRITE?MAX_WRITE:len;
+                out.write(_bytes,off,c);
+                off+=c;
+                len-=c;
+            }
+        }
+        else
+            out.write(_bytes,getIndex(),len);
         if (!isImmutable())
             clear();
     }

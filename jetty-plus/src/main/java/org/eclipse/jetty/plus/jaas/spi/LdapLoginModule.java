@@ -1,21 +1,28 @@
-// ========================================================================
-// Copyright (c) 2007-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
+
 package org.eclipse.jetty.plus.jaas.spi;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 
@@ -327,6 +334,7 @@ public class LdapLoginModule extends AbstractLoginModule
         SearchControls ctls = new SearchControls();
         ctls.setDerefLinkFlag(true);
         ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+        ctls.setReturningAttributes(new String[]{_roleNameAttribute});
 
         String filter = "(&(objectClass={0})({1}={2}))";
         Object[] filterArguments = {_roleObjectClass, _roleMemberAttribute, userDn};
@@ -646,12 +654,12 @@ public class LdapLoginModule extends AbstractLoginModule
 
     public static String convertCredentialJettyToLdap(String encryptedPassword)
     {
-        if ("MD5:".startsWith(encryptedPassword.toUpperCase()))
+        if ("MD5:".startsWith(encryptedPassword.toUpperCase(Locale.ENGLISH)))
         {
             return "{MD5}" + encryptedPassword.substring("MD5:".length(), encryptedPassword.length());
         }
 
-        if ("CRYPT:".startsWith(encryptedPassword.toUpperCase()))
+        if ("CRYPT:".startsWith(encryptedPassword.toUpperCase(Locale.ENGLISH)))
         {
             return "{CRYPT}" + encryptedPassword.substring("CRYPT:".length(), encryptedPassword.length());
         }
@@ -666,12 +674,12 @@ public class LdapLoginModule extends AbstractLoginModule
             return encryptedPassword;
         }
 
-        if ("{MD5}".startsWith(encryptedPassword.toUpperCase()))
+        if ("{MD5}".startsWith(encryptedPassword.toUpperCase(Locale.ENGLISH)))
         {
             return "MD5:" + encryptedPassword.substring("{MD5}".length(), encryptedPassword.length());
         }
 
-        if ("{CRYPT}".startsWith(encryptedPassword.toUpperCase()))
+        if ("{CRYPT}".startsWith(encryptedPassword.toUpperCase(Locale.ENGLISH)))
         {
             return "CRYPT:" + encryptedPassword.substring("{CRYPT}".length(), encryptedPassword.length());
         }

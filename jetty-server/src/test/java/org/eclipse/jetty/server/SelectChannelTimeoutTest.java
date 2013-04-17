@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2010 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses.
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.server;
 
@@ -17,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
+import java.util.Locale;
 
 import org.eclipse.jetty.server.nio.SelectChannelConnector;
 import org.eclipse.jetty.server.session.SessionHandler;
@@ -49,7 +55,7 @@ public class SelectChannelTimeoutTest extends ConnectorTimeoutTest
 
         _handler.setSuspendFor(100);
         _handler.setResumeAfter(25);
-        assertTrue(process(null).toUpperCase().contains("RESUMED"));
+        assertTrue(process(null).toUpperCase(Locale.ENGLISH).contains("RESUMED"));
     }
 
     @Test
@@ -63,7 +69,7 @@ public class SelectChannelTimeoutTest extends ConnectorTimeoutTest
         _server.start();
 
         _handler.setSuspendFor(50);
-        assertTrue(process(null).toUpperCase().contains("TIMEOUT"));
+        assertTrue(process(null).toUpperCase(Locale.ENGLISH).contains("TIMEOUT"));
     }
 
     @Test
@@ -78,7 +84,7 @@ public class SelectChannelTimeoutTest extends ConnectorTimeoutTest
 
         _handler.setSuspendFor(100);
         _handler.setCompleteAfter(25);
-        assertTrue(process(null).toUpperCase().contains("COMPLETED"));
+        assertTrue(process(null).toUpperCase(Locale.ENGLISH).contains("COMPLETED"));
     }
 
     private synchronized String process(String content) throws UnsupportedEncodingException, IOException, InterruptedException

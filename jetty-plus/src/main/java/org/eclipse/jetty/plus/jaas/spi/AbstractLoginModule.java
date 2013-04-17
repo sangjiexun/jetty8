@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 1999-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.plus.jaas.spi;
 
@@ -24,6 +29,7 @@ import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
+import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.auth.login.LoginException;
 import javax.security.auth.spi.LoginModule;
@@ -187,9 +193,10 @@ public abstract class AbstractLoginModule implements LoginModule
     public Callback[] configureCallbacks ()
     {
      
-        Callback[] callbacks = new Callback[2];
+        Callback[] callbacks = new Callback[3];
         callbacks[0] = new NameCallback("Enter user name");
         callbacks[1] = new ObjectCallback();
+        callbacks[2] = new PasswordCallback("Enter password", false); //only used if framework does not support the ObjectCallback
         return callbacks;
     }
     
@@ -215,7 +222,11 @@ public abstract class AbstractLoginModule implements LoginModule
             callbackHandler.handle(callbacks);
 
             String webUserName = ((NameCallback)callbacks[0]).getName();
-            Object webCredential = ((ObjectCallback)callbacks[1]).getObject();
+            Object webCredential = null;
+            
+            webCredential = ((ObjectCallback)callbacks[1]).getObject(); //first check if ObjectCallback has the credential
+            if (webCredential == null)
+                webCredential = ((PasswordCallback)callbacks[2]).getPassword(); //use standard PasswordCallback
 
             if ((webUserName == null) || (webCredential == null))
             {

@@ -1,3 +1,21 @@
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
+
 package org.eclipse.jetty.server.session;
 
 import java.io.DataOutputStream;
@@ -82,6 +100,7 @@ public class HashedSession extends AbstractSession
 
     /* ------------------------------------------------------------ */
     synchronized void save(boolean reactivate)
+    throws Exception
     {
         // Only idle the session if not already idled and no previous save/idle has failed
         if (!isIdled() && !_saveFailed)
@@ -110,16 +129,13 @@ public class HashedSession extends AbstractSession
             catch (Exception e)
             {
                 saveFailed(); // We won't try again for this session
-
-                LOG.warn("Problem saving session " + super.getId(), e);
-
                 if (fos != null)
                 {
                     // Must not leave the file open if the saving failed
                     IO.close(fos);
                     // No point keeping the file if we didn't save the whole session
                     file.delete();
-                    _idled=false; // assume problem was before _values.clear();
+                    throw e;
                 }
             }
         }
@@ -163,7 +179,7 @@ public class HashedSession extends AbstractSession
             access(System.currentTimeMillis());
 
             if (LOG.isDebugEnabled())
-                LOG.debug("Deidling " + super.getId());
+                LOG.debug("De-idling " + super.getId());
 
             FileInputStream fis = null;
 
@@ -185,7 +201,7 @@ public class HashedSession extends AbstractSession
             }
             catch (Exception e)
             {
-                LOG.warn("Problem deidling session " + super.getId(), e);
+                LOG.warn("Problem de-idling session " + super.getId(), e);
                 IO.close(fis);
                 invalidate();
             }
@@ -201,8 +217,10 @@ public class HashedSession extends AbstractSession
      * it to an idled state.  
      */
     public synchronized void idle()
+    throws Exception
     {
         save(false);
+        _idled = true;
     }
     
     /* ------------------------------------------------------------ */

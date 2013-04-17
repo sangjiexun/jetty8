@@ -1,20 +1,26 @@
-// ========================================================================
-// Copyright (c) 2004-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses.
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.server;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -23,6 +29,8 @@ import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Locale;
@@ -131,6 +139,39 @@ public class ResponseTest
         response.setContentType("text/json");
         response.getWriter();
         assertEquals("text/json;charset=UTF-8", response.getContentType());
+        
+        response.recycle();
+        response.setCharacterEncoding("xyz");
+        response.setContentType("foo/bar");
+        assertEquals("foo/bar;charset=xyz", response.getContentType());
+
+        response.recycle();
+        response.setContentType("foo/bar");
+        response.setCharacterEncoding("xyz");
+        assertEquals("foo/bar;charset=xyz", response.getContentType());
+
+        response.recycle();
+        response.setCharacterEncoding("xyz");
+        response.setContentType("foo/bar;charset=abc");
+        assertEquals("foo/bar;charset=abc", response.getContentType());
+
+        response.recycle();
+        response.setContentType("foo/bar;charset=abc");
+        response.setCharacterEncoding("xyz");
+        assertEquals("foo/bar;charset=xyz", response.getContentType());
+
+        response.recycle();
+        response.setCharacterEncoding("xyz");
+        response.setContentType("foo/bar");
+        response.setCharacterEncoding(null);
+        assertEquals("foo/bar", response.getContentType());
+        
+        response.recycle();
+        response.setCharacterEncoding("xyz");
+        response.setCharacterEncoding(null);
+        response.setContentType("foo/bar");
+        assertEquals("foo/bar", response.getContentType());
+
     }
 
     @Test
@@ -384,8 +425,13 @@ public class ResponseTest
         throws Exception
     {
         String[][] tests={
-                {"/other/location?name=value","http://myhost:8888/other/location;jsessionid=12345?name=value"},
-               /* {"/other/location","http://myhost:8888/other/location"},
+                // No cookie
+                {"http://myhost:8888/other/location;jsessionid=12345?name=value","http://myhost:8888/other/location;jsessionid=12345?name=value"},
+                {"/other/location;jsessionid=12345?name=value","http://myhost:8888/other/location;jsessionid=12345?name=value"},
+                {"./location;jsessionid=12345?name=value","http://myhost:8888/path/location;jsessionid=12345?name=value"},
+                
+                // From cookie
+                {"/other/location","http://myhost:8888/other/location"},
                 {"/other/l%20cation","http://myhost:8888/other/l%20cation"},
                 {"location","http://myhost:8888/path/location"},
                 {"./location","http://myhost:8888/path/location"},
@@ -393,11 +439,11 @@ public class ResponseTest
                 {"/other/l%20cation","http://myhost:8888/other/l%20cation"},
                 {"l%20cation","http://myhost:8888/path/l%20cation"},
                 {"./l%20cation","http://myhost:8888/path/l%20cation"},
-                {"../l%20cation","http://myhost:8888/l%20cation"},*/
+                {"../l%20cation","http://myhost:8888/l%20cation"},
                 {"../locati%C3%abn","http://myhost:8888/locati%C3%ABn"},
         };
         
-        for (int i=1;i<tests.length;i++)
+        for (int i=0;i<tests.length;i++)
         {
             ByteArrayEndPoint out=new ByteArrayEndPoint(new byte[]{},4096);
             AbstractHttpConnection connection=new TestHttpConnection(connector,out, connector.getServer());
@@ -408,7 +454,7 @@ public class ResponseTest
             request.setUri(new HttpURI("/path/info;param;jsessionid=12345?query=0&more=1#target"));
             request.setContextPath("/path");
             request.setRequestedSessionId("12345");
-            request.setRequestedSessionIdFromCookie(i>0);
+            request.setRequestedSessionIdFromCookie(i>2);
             AbstractSessionManager manager=new HashSessionManager();
             manager.setSessionIdManager(new HashSessionIdManager());
             request.setSessionManager(manager);
@@ -421,7 +467,7 @@ public class ResponseTest
             int l=location.indexOf("Location: ");
             int e=location.indexOf('\n',l);
             location=location.substring(l+10,e).trim();
-            assertEquals(tests[i][0],tests[i][1],location);
+            assertEquals("test-"+i,tests[i][1],location);
         }
     }
 
@@ -519,6 +565,42 @@ public class ResponseTest
         String set = response.getHttpFields().getStringField("Set-Cookie");
         
         assertEquals("name=value;Comment=comment;Path=/path;Domain=domain;Secure;HttpOnly",set);
+    }
+    
+    
+    @Test
+    public void testCookiesWithReset() throws Exception
+    { 
+        Response response = new Response(new TestHttpConnection(connector,new ByteArrayEndPoint(), connector.getServer()));
+
+        Cookie cookie=new Cookie("name","value");
+        cookie.setDomain("domain");
+        cookie.setPath("/path");
+        cookie.setSecure(true);
+        cookie.setComment("comment__HTTP_ONLY__");
+        response.addCookie(cookie);
+        
+        Cookie cookie2=new Cookie("name2", "value2");
+        cookie2.setDomain("domain");
+        cookie2.setPath("/path");
+        response.addCookie(cookie2);
+
+        //keep the cookies
+        response.reset(true);        
+
+        Enumeration<String> set = response.getHttpFields().getValues("Set-Cookie");
+
+        assertNotNull(set);
+        ArrayList<String> list = Collections.list(set);
+        assertEquals(2, list.size());
+        assertTrue(list.contains("name=value;Comment=comment;Path=/path;Domain=domain;Secure;HttpOnly"));
+        assertTrue(list.contains("name2=value2;Path=/path;Domain=domain"));
+        
+        //get rid of the cookies
+        response.reset();
+        
+        set = response.getHttpFields().getValues("Set-Cookie");
+        assertFalse(set.hasMoreElements());
     }
 
     private Response newResponse()

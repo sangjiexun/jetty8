@@ -1,44 +1,43 @@
-/*
- * Copyright (c) 2012 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.spdy;
 
-import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.eclipse.jetty.spdy.api.ByteBufferDataInfo;
 import org.eclipse.jetty.spdy.api.DataInfo;
 import org.eclipse.jetty.spdy.api.Handler;
 import org.eclipse.jetty.spdy.api.HeadersInfo;
 import org.eclipse.jetty.spdy.api.ReplyInfo;
 import org.eclipse.jetty.spdy.api.RstInfo;
-import org.eclipse.jetty.spdy.api.Session;
 import org.eclipse.jetty.spdy.api.Stream;
 import org.eclipse.jetty.spdy.api.StreamFrameListener;
 import org.eclipse.jetty.spdy.api.StreamStatus;
+import org.eclipse.jetty.spdy.api.SynInfo;
 import org.eclipse.jetty.spdy.frames.ControlFrame;
-import org.eclipse.jetty.spdy.frames.DataFrame;
 import org.eclipse.jetty.spdy.frames.HeadersFrame;
 import org.eclipse.jetty.spdy.frames.SynReplyFrame;
-import org.eclipse.jetty.spdy.frames.SynStreamFrame;
-import org.eclipse.jetty.spdy.frames.WindowUpdateFrame;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 
@@ -46,30 +45,59 @@ public class StandardStream implements IStream
 {
     private static final Logger logger = Log.getLogger(Stream.class);
     private final Map<String, Object> attributes = new ConcurrentHashMap<>();
-    private final SynStreamFrame frame;
+    private final int id;
+    private final byte priority;
     private final ISession session;
-    private final AtomicInteger windowSize;
+    private final IStream associatedStream;
+    private final AtomicInteger windowSize = new AtomicInteger();
+    private final Set<Stream> pushedStreams = Collections.newSetFromMap(new ConcurrentHashMap<Stream, Boolean>());
     private volatile StreamFrameListener listener;
     private volatile OpenState openState = OpenState.SYN_SENT;
     private volatile CloseState closeState = CloseState.OPENED;
+    private volatile boolean reset = false;
 
-    public StandardStream(SynStreamFrame frame, ISession session, int windowSize)
+    public StandardStream(int id, byte priority, ISession session, IStream associatedStream)
     {
-        this.frame = frame;
+        this.id = id;
+        this.priority = priority;
         this.session = session;
-        this.windowSize = new AtomicInteger(windowSize);
+        this.associatedStream = associatedStream;
     }
 
     @Override
     public int getId()
     {
-        return frame.getStreamId();
+        return id;
+    }
+
+    @Override
+    public IStream getAssociatedStream()
+    {
+        return associatedStream;
+    }
+
+    @Override
+    public Set<Stream> getPushedStreams()
+    {
+        return pushedStreams;
+    }
+
+    @Override
+    public void associate(IStream stream)
+    {
+        pushedStreams.add(stream);
+    }
+
+    @Override
+    public void disassociate(IStream stream)
+    {
+        pushedStreams.remove(stream);
     }
 
     @Override
     public byte getPriority()
     {
-        return frame.getPriority();
+        return priority;
     }
 
     @Override
@@ -82,21 +110,13 @@ public class StandardStream implements IStream
     public void updateWindowSize(int delta)
     {
         int size = windowSize.addAndGet(delta);
-        logger.debug("Updated window size by {}, new window size {}", delta, size);
+        logger.debug("Updated window size {} -> {} for {}", size - delta, size, this);
     }
 
     @Override
-    public Session getSession()
+    public ISession getSession()
     {
         return session;
-    }
-
-    public boolean isHalfClosed()
-    {
-        CloseState closeState = this.closeState;
-        return closeState == CloseState.LOCALLY_CLOSED ||
-                closeState == CloseState.REMOTELY_CLOSED ||
-                closeState == CloseState.CLOSED;
     }
 
     @Override
@@ -108,7 +128,7 @@ public class StandardStream implements IStream
     @Override
     public void setAttribute(String key, Object value)
     {
-        attributes.put(key, value);
+        attributes.put(key,value);
     }
 
     @Override
@@ -121,6 +141,11 @@ public class StandardStream implements IStream
     public void setStreamFrameListener(StreamFrameListener listener)
     {
         this.listener = listener;
+    }
+
+    public StreamFrameListener getStreamFrameListener()
+    {
+        return listener;
     }
 
     @Override
@@ -186,15 +211,9 @@ public class StandardStream implements IStream
                 notifyOnHeaders(headersInfo);
                 break;
             }
-            case WINDOW_UPDATE:
-            {
-                WindowUpdateFrame windowUpdate = (WindowUpdateFrame)frame;
-                updateWindowSize(windowUpdate.getWindowDelta());
-                break;
-            }
             case RST_STREAM:
             {
-                // TODO:
+                reset = true;
                 break;
             }
             default:
@@ -206,46 +225,26 @@ public class StandardStream implements IStream
     }
 
     @Override
-    public void process(DataFrame frame, ByteBuffer data)
+    public void process(DataInfo dataInfo)
     {
+        // TODO: in v3 we need to send a rst instead of just ignoring
+        // ignore data frame if this stream is remotelyClosed already
+        if (isRemotelyClosed())
+        {
+            logger.debug("Stream is remotely closed, ignoring {}", dataInfo);
+            return;
+        }
+
         if (!canReceive())
         {
+            logger.debug("Protocol error receiving {}, resetting" + dataInfo);
             session.rst(new RstInfo(getId(), StreamStatus.PROTOCOL_ERROR));
             return;
         }
 
-        updateCloseState(frame.isClose(), false);
-
-        ByteBufferDataInfo dataInfo = new ByteBufferDataInfo(data, frame.isClose(), frame.isCompress())
-        {
-            @Override
-            public void consume(int delta)
-            {
-                super.consume(delta);
-
-                // This is the algorithm for flow control.
-                // This method may be called multiple times with delta=1, but we only send a window
-                // update when the whole dataInfo has been consumed.
-                // Other policies may be to send window updates when consumed() is greater than
-                // a certain threshold, etc. but for now the policy is not pluggable for simplicity.
-                // Note that the frequency of window updates depends on the read buffer, that
-                // should not be too smaller than the window size to avoid frequent window updates.
-                // Therefore, a pluggable policy should be able to modify the read buffer capacity.
-                if (consumed() == length() && !isClosed())
-                    windowUpdate(length());
-            }
-        };
+        updateCloseState(dataInfo.isClose(), false);
         notifyOnData(dataInfo);
         session.flush();
-    }
-
-    private void windowUpdate(int delta)
-    {
-        if (delta > 0)
-        {
-            WindowUpdateFrame windowUpdateFrame = new WindowUpdateFrame(session.getVersion(), getId(), delta);
-            session.control(this, windowUpdateFrame, 0, TimeUnit.MILLISECONDS, null, null);
-        }
     }
 
     private void notifyOnReply(ReplyInfo replyInfo)
@@ -263,6 +262,11 @@ public class StandardStream implements IStream
         {
             logger.info("Exception while notifying listener " + listener, x);
         }
+        catch (Error x)
+        {
+            logger.info("Exception while notifying listener " + listener, x);
+            throw x;
+        }
     }
 
     private void notifyOnHeaders(HeadersInfo headersInfo)
@@ -272,13 +276,18 @@ public class StandardStream implements IStream
         {
             if (listener != null)
             {
-                logger.debug("Invoking headers callback with {} on listener {}", frame, listener);
+                logger.debug("Invoking headers callback with {} on listener {}", headersInfo, listener);
                 listener.onHeaders(this, headersInfo);
             }
         }
         catch (Exception x)
         {
             logger.info("Exception while notifying listener " + listener, x);
+        }
+        catch (Error x)
+        {
+            logger.info("Exception while notifying listener " + listener, x);
+            throw x;
         }
     }
 
@@ -298,19 +307,46 @@ public class StandardStream implements IStream
         {
             logger.info("Exception while notifying listener " + listener, x);
         }
+        catch (Error x)
+        {
+            logger.info("Exception while notifying listener " + listener, x);
+            throw x;
+        }
+    }
+
+    @Override
+    public Future<Stream> syn(SynInfo synInfo)
+    {
+        Promise<Stream> result = new Promise<>();
+        syn(synInfo,0,TimeUnit.MILLISECONDS,result);
+        return result;
+    }
+
+    @Override
+    public void syn(SynInfo synInfo, long timeout, TimeUnit unit, Handler<Stream> handler)
+    {
+        if (isClosed() || isReset())
+        {
+            handler.failed(this, new StreamException(getId(), StreamStatus.STREAM_ALREADY_CLOSED));
+            return;
+        }
+        PushSynInfo pushSynInfo = new PushSynInfo(getId(), synInfo);
+        session.syn(pushSynInfo, null, timeout, unit, handler);
     }
 
     @Override
     public Future<Void> reply(ReplyInfo replyInfo)
     {
         Promise<Void> result = new Promise<>();
-        reply(replyInfo, 0, TimeUnit.MILLISECONDS, result);
+        reply(replyInfo,0,TimeUnit.MILLISECONDS,result);
         return result;
     }
 
     @Override
     public void reply(ReplyInfo replyInfo, long timeout, TimeUnit unit, Handler<Void> handler)
     {
+        if (isUnidirectional())
+            throw new IllegalStateException("Protocol violation: cannot send SYN_REPLY frames in unidirectional streams");
         openState = OpenState.REPLY_SENT;
         updateCloseState(replyInfo.isClose(), true);
         SynReplyFrame frame = new SynReplyFrame(session.getVersion(), replyInfo.getFlags(), getId(), replyInfo.getHeaders());
@@ -321,7 +357,7 @@ public class StandardStream implements IStream
     public Future<Void> data(DataInfo dataInfo)
     {
         Promise<Void> result = new Promise<>();
-        data(dataInfo, 0, TimeUnit.MILLISECONDS, result);
+        data(dataInfo,0,TimeUnit.MILLISECONDS,result);
         return result;
     }
 
@@ -348,7 +384,7 @@ public class StandardStream implements IStream
     public Future<Void> headers(HeadersInfo headersInfo)
     {
         Promise<Void> result = new Promise<>();
-        headers(headersInfo, 0, TimeUnit.MILLISECONDS, result);
+        headers(headersInfo,0,TimeUnit.MILLISECONDS,result);
         return result;
     }
 
@@ -372,6 +408,25 @@ public class StandardStream implements IStream
     }
 
     @Override
+    public boolean isUnidirectional()
+    {
+        return associatedStream != null;
+    }
+
+    @Override
+    public boolean isReset()
+    {
+        return reset;
+    }
+
+    @Override
+    public boolean isHalfClosed()
+    {
+        CloseState closeState = this.closeState;
+        return closeState == CloseState.LOCALLY_CLOSED || closeState == CloseState.REMOTELY_CLOSED || closeState == CloseState.CLOSED;
+    }
+
+    @Override
     public boolean isClosed()
     {
         return closeState == CloseState.CLOSED;
@@ -383,10 +438,16 @@ public class StandardStream implements IStream
         return closeState == CloseState.LOCALLY_CLOSED || closeState == CloseState.CLOSED;
     }
 
+    private boolean isRemotelyClosed()
+    {
+        CloseState closeState = this.closeState;
+        return closeState == CloseState.REMOTELY_CLOSED || closeState == CloseState.CLOSED;
+    }
+
     @Override
     public String toString()
     {
-        return String.format("stream=%d v%d %s", getId(), session.getVersion(), closeState);
+        return String.format("stream=%d v%d windowSize=%db reset=%s %s %s", getId(), session.getVersion(), getWindowSize(), isReset(), openState, closeState);
     }
 
     private boolean canSend()

@@ -1,21 +1,25 @@
-// ========================================================================
-// Copyright (c) Webtide LLC
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
 //
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
 //
-// The Apache License v2.0 is available at
-// http://www.apache.org/licenses/LICENSE-2.0.txt
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
 //
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
+
 package org.eclipse.jetty.deploy.util;
 
 import java.io.File;
+import java.util.Locale;
 
 /**
  * Simple, yet surprisingly common utility methods for identifying various file types commonly seen and worked with in a
@@ -35,7 +39,7 @@ public class FileID
     {
         if (path.isFile())
         {
-            String name = path.getName().toLowerCase();
+            String name = path.getName().toLowerCase(Locale.ENGLISH);
             return (name.endsWith(".war") || name.endsWith(".jar"));
         }
 
@@ -59,7 +63,7 @@ public class FileID
             return false;
         }
 
-        String name = path.getName().toLowerCase();
+        String name = path.getName().toLowerCase(Locale.ENGLISH);
         return (name.endsWith(".war") || name.endsWith(".jar"));
     }
 
@@ -70,7 +74,7 @@ public class FileID
             return false;
         }
 
-        String name = path.getName().toLowerCase();
+        String name = path.getName().toLowerCase(Locale.ENGLISH);
         return name.endsWith(".xml");
     }
 }

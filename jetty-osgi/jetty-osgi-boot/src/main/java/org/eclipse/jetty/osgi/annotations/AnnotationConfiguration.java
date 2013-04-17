@@ -1,20 +1,28 @@
-// ========================================================================
-// Copyright (c) 2006-2011 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
+
 package org.eclipse.jetty.osgi.annotations;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.jetty.annotations.AbstractDiscoverableAnnotationHandler;
+import org.eclipse.jetty.annotations.AnnotationParser.DiscoverableAnnotationHandler;
 import org.eclipse.jetty.annotations.ClassNameResolver;
 import org.eclipse.jetty.osgi.boot.OSGiWebappConstants;
 import org.eclipse.jetty.osgi.boot.utils.internal.PackageAdminServiceTracker;
@@ -145,20 +153,25 @@ public class AnnotationConfiguration extends org.eclipse.jetty.annotations.Annot
     protected void parseBundle(WebAppContext context, AnnotationParser parser,
             Bundle webbundle, Bundle bundle) throws Exception
     {
+        
         Resource bundleRes = parser.getResource(bundle);
+        
+        parser.clearHandlers();
+        for (DiscoverableAnnotationHandler h:_discoverableAnnotationHandlers)
+        {
+            if (h instanceof AbstractDiscoverableAnnotationHandler)
+            {
+                if (webbundle == bundle)                    
+                ((AbstractDiscoverableAnnotationHandler)h).setResource(null); 
+                else
+                    ((AbstractDiscoverableAnnotationHandler)h).setResource(bundleRes);  
+            }
+        }
+        parser.registerHandlers(_discoverableAnnotationHandlers);
+        parser.registerHandler(_classInheritanceHandler);
+        parser.registerHandlers(_containerInitializerAnnotationHandlers);
+      
         parser.parse(bundle,createClassNameResolver(context));
-        List<DiscoveredAnnotation> annotations = new ArrayList<DiscoveredAnnotation>();
-        gatherAnnotations(annotations, parser.getAnnotationHandlers());
-        if (webbundle == bundle)
-        {
-            //just like the super with its question about annotations in WEB-INF/classes:
-            //"TODO - where to set the annotations discovered from WEB-INF/classes?"
-            context.getMetaData().addDiscoveredAnnotations(annotations);
-        }
-        else
-        {
-            context.getMetaData().addDiscoveredAnnotations(bundleRes, annotations);
-        }
     }
     
     /**

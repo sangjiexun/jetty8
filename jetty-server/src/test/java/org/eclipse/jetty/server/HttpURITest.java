@@ -1,19 +1,25 @@
-// ========================================================================
-// Copyright (c) 2006-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses.
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.server;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -21,12 +27,16 @@ import static org.junit.Assert.fail;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.util.Iterator;
+import java.util.Set;
 
 import junit.framework.Assert;
 
+import org.eclipse.jetty.http.EncodedHttpURI;
 import org.eclipse.jetty.http.HttpURI;
 import org.eclipse.jetty.io.ByteArrayBuffer;
 import org.eclipse.jetty.util.MultiMap;
+import org.eclipse.jetty.util.TypeUtil;
 import org.junit.Test;
 
 public class HttpURITest
@@ -181,10 +191,12 @@ public class HttpURITest
 
     private final String[][] encoding_tests=
     {
-       /* 0*/ {"/path/info","/path/info"},
-       /* 1*/ {"/path/%69nfo","/path/info"},
-       /* 2*/ {"http://host/path/%69nfo","/path/info"},
-       /* 3*/ {"http://host/path/%69nf%c2%a4","/path/inf\u00a4"},
+       /* 0*/ {"/path/info","/path/info", "UTF-8"},
+       /* 1*/ {"/path/%69nfo","/path/info", "UTF-8"},
+       /* 2*/ {"http://host/path/%69nfo","/path/info", "UTF-8"},
+       /* 3*/ {"http://host/path/%69nf%c2%a4","/path/inf\u00a4", "UTF-8"},
+       /* 4*/ {"http://host/path/%E5", "/path/\u00e5", "ISO-8859-1"},
+       /* 5*/ {"/foo/%u30ED/bar%3Fabc%3D123%26xyz%3D456","/foo/\u30ed/bar?abc=123&xyz=456","UTF-8"}
     };
 
     @Test
@@ -195,15 +207,116 @@ public class HttpURITest
         for (int t=0;t<encoding_tests.length;t++)
         {
             uri.parse(encoding_tests[t][0]);
-            assertEquals(""+t,encoding_tests[t][1],uri.getDecodedPath());
-
+            assertEquals(""+t,encoding_tests[t][1],uri.getDecodedPath(encoding_tests[t][2]));
+            
+            if ("UTF-8".equalsIgnoreCase(encoding_tests[t][2]))
+                assertEquals(""+t,encoding_tests[t][1],uri.getDecodedPath());
         }
+    }
+    
+    @Test
+    public void testNoPercentEncodingOfQueryUsingNonUTF8() throws Exception
+    {
+        
+        byte[] utf8_bytes = "/%D0%A1%D1%82%D1%80%D0%BE%D0%BD%D0%B3-%D1%84%D0%B8%D0%BB%D1%8C%D1%82%D1%80/%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3?".getBytes("UTF-8");
+        byte[] cp1251_bytes = TypeUtil.fromHexString("e2fbe1f0e0edee3dd2e5ecefe5f0e0f2f3f0e0");
+        String expectedCP1251String = new String(cp1251_bytes, "cp1251");
+        String expectedCP1251Key = new String(cp1251_bytes, 0, 7, "cp1251");
+        String expectedCP1251Value = new String(cp1251_bytes, 8, cp1251_bytes.length-8, "cp1251");
+       
+        //paste both byte arrays together to form the uri
+        byte[] allbytes = new byte[utf8_bytes.length+cp1251_bytes.length];
+        int i=0;
+        for (;i<utf8_bytes.length;i++) {
+            allbytes[i] = utf8_bytes[i];
+        }
+        for (int j=0; j< cp1251_bytes.length;j++)
+            allbytes[i+j] = cp1251_bytes[j];
+        
+        //Test using a HttpUri that expects a particular charset encoding. See URIUtil.__CHARSET
+        EncodedHttpURI uri = new EncodedHttpURI("cp1251");
+        uri.parse(allbytes, 0, allbytes.length);
+        assertEquals(expectedCP1251String, uri.getQuery("cp1251"));
+        
+        //Test params decoded correctly
+        MultiMap params = new MultiMap();
+        uri.decodeQueryTo(params);
+        String val = params.getString(expectedCP1251Key);
+        assertNotNull(val);
+        assertEquals(expectedCP1251Value, val);
+        
+        //Test using HttpURI where you pass in the charset encoding.
+        HttpURI httpuri = new HttpURI();
+        httpuri.parse(allbytes,0,allbytes.length);
+        assertNotNull(httpuri.getQuery("UTF-8")); //still get back a query string, just incorrectly encoded
+        assertEquals(expectedCP1251String, httpuri.getQuery("cp1251"));
+        
+        //Test params decoded correctly
+        params.clear();
+        httpuri.decodeQueryTo(params, "cp1251");
+        val = params.getString(expectedCP1251Key);
+        assertNotNull(val);
+        assertEquals(expectedCP1251Value, val);
+        
+        //test able to set the query encoding and call getQueryString multiple times
+        Request request = new Request();
+        request.setUri(httpuri);    
+        request.setAttribute("org.eclipse.jetty.server.Request.queryEncoding", "ISO-8859-1");
+        assertNotNull (request.getQueryString()); //will be incorrect encoding but not null
+        request.setAttribute("org.eclipse.jetty.server.Request.queryEncoding", "cp1251");
+        assertEquals(expectedCP1251String, request.getQueryString());
+    }
+    
+    @Test
+    public void testPercentEncodingOfQueryStringUsingNonUTF8() throws UnsupportedEncodingException
+    {
+    
+      byte[] utf8_bytes = "/%D0%A1%D1%82%D1%80%D0%BE%D0%BD%D0%B3-%D1%84%D0%B8%D0%BB%D1%8C%D1%82%D1%80/%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3?".getBytes("UTF-8");
+      byte[] cp1251_bytes = "%e2%fb%e1%f0%e0%ed%ee=%d2%e5%ec%ef%e5%f0%e0%f2%f3%f0%e0".getBytes("cp1251");
+      
+      byte[] key_bytes = TypeUtil.fromHexString("e2fbe1f0e0edee");
+      byte[] val_bytes = TypeUtil.fromHexString("d2e5ecefe5f0e0f2f3f0e0");
+      String expectedCP1251String = new String(cp1251_bytes, "cp1251");
+      String expectedCP1251Key = new String(key_bytes, "cp1251");
+      String expectedCP1251Value = new String(val_bytes, "cp1251");
+      
+      byte[] allbytes = new byte[utf8_bytes.length+cp1251_bytes.length];
+      
+      //stick both arrays together to form uri
+      int i=0;
+      for (;i<utf8_bytes.length;i++) {
+          allbytes[i] = utf8_bytes[i];
+      }
+      for (int j=0; j< cp1251_bytes.length;j++)
+          allbytes[i+j] = cp1251_bytes[j];
+
+
+      HttpURI httpuri = new HttpURI();
+      httpuri.parse(allbytes,0,allbytes.length);
+      assertNotNull(httpuri.getQuery("UTF-8")); //will be incorrectly encoded, but no errors
+      assertEquals(expectedCP1251String, httpuri.getQuery("cp1251"));
+
+      //test params decoded correctly
+      MultiMap params = new MultiMap();
+      httpuri.decodeQueryTo(params, "cp1251");
+      String val = params.getString(expectedCP1251Key);
+      assertNotNull(val);
+      assertEquals(expectedCP1251Value, val);
+      
+      //test able to set the query encoding and call getQueryString multiple times
+      Request request = new Request();
+      request.setUri(httpuri);    
+      request.setAttribute("org.eclipse.jetty.server.Request.queryEncoding", "ISO-8859-1");
+      assertNotNull (request.getQueryString()); //will be incorrect encoding but not null
+      request.setAttribute("org.eclipse.jetty.server.Request.queryEncoding", "cp1251");
+      assertEquals(expectedCP1251String, request.getQueryString());
+      
     }
 
     @Test
     public void testUnicodeErrors() throws UnsupportedEncodingException
     {
-        String uri="http://server/path?invalid=data%u2021here";
+        String uri="http://server/path?invalid=data%uXXXXhere%u000";
         try
         {
             URLDecoder.decode(uri,"UTF-8");

@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2010-2011 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.overlays;
 
@@ -27,6 +32,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -384,7 +390,7 @@ public class OverlayedAppProvider extends AbstractLifeCycle implements AppProvid
                 List<URL> libs = new ArrayList<URL>();
                 for (String jar :instance_lib.list())
                 {
-                    if (!jar.toLowerCase().endsWith(".jar"))
+                    if (!jar.toLowerCase(Locale.ENGLISH).endsWith(".jar"))
                         continue;
                     libs.add(instance_lib.addPath(jar).getURL());
                 }
@@ -426,7 +432,7 @@ public class OverlayedAppProvider extends AbstractLifeCycle implements AppProvid
                 context.setBaseResource(new ResourceCollection(instance_webapp,shared.getBaseResource()));
 
                 // Create the resource cache
-                ResourceCache cache = new ResourceCache(shared.getResourceCache(),instance_webapp,context.getMimeTypes());
+                ResourceCache cache = new ResourceCache(shared.getResourceCache(),instance_webapp,context.getMimeTypes(),false,false);
                 context.setAttribute(ResourceCache.class.getCanonicalName(),cache);
             }
             else
@@ -605,7 +611,7 @@ public class OverlayedAppProvider extends AbstractLifeCycle implements AppProvid
         {
             for (String jar :lib.list())
             {
-                if (!jar.toLowerCase().endsWith(".jar"))
+                if (!jar.toLowerCase(Locale.ENGLISH).endsWith(".jar"))
                     continue;
                 libs.add(lib.addPath(jar).getURL());
             }
@@ -827,12 +833,12 @@ public class OverlayedAppProvider extends AbstractLifeCycle implements AppProvid
                 File origin = new File(new URI(_scanDir.toURI()+ruri));
                 String name=origin.getName();
                 
-                Monitor monitor = Monitor.valueOf(origin.getParentFile().getName().toUpperCase());
+                Monitor monitor = Monitor.valueOf(origin.getParentFile().getName().toUpperCase(Locale.ENGLISH));
                 
                 String ext=".war";
                 
                 // check directory vs archive 
-                if (origin.isDirectory() || !origin.exists() && !ruri.toLowerCase().endsWith(ext))
+                if (origin.isDirectory() || !origin.exists() && !ruri.toLowerCase(Locale.ENGLISH).endsWith(ext))
                 {
                     // directories have priority over archives
                     directory=origin;
@@ -841,7 +847,7 @@ public class OverlayedAppProvider extends AbstractLifeCycle implements AppProvid
                 else
                 {
                     // check extension name
-                    if (!ruri.toLowerCase().endsWith(ext))
+                    if (!ruri.toLowerCase(Locale.ENGLISH).endsWith(ext))
                         continue;
 
                     name=name.substring(0,name.length()-4);

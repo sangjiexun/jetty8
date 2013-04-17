@@ -1,15 +1,20 @@
-// ========================================================================
-// Copyright (c) 2006-2009 Mort Bay Consulting Pty. Ltd.
-// ------------------------------------------------------------------------
-// All rights reserved. This program and the accompanying materials
-// are made available under the terms of the Eclipse Public License v1.0
-// and Apache License v2.0 which accompanies this distribution.
-// The Eclipse Public License is available at 
-// http://www.eclipse.org/legal/epl-v10.html
-// The Apache License v2.0 is available at
-// http://www.opensource.org/licenses/apache2.0.php
-// You may elect to redistribute this code under either of these licenses. 
-// ========================================================================
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
 
 package org.eclipse.jetty.util; 
 
@@ -22,6 +27,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.Locale;
 import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -216,7 +222,7 @@ public class RolloverFileOutputStream extends FilterOutputStream
         
         // Is this a rollover file?
         String filename=file.getName();
-        int i=filename.toLowerCase().indexOf(YYYY_MM_DD);
+        int i=filename.toLowerCase(Locale.ENGLISH).indexOf(YYYY_MM_DD);
         if (i>=0)
         {
             file=new File(dir,
@@ -253,7 +259,7 @@ public class RolloverFileOutputStream extends FilterOutputStream
             File file= new File(_filename);
             File dir = new File(file.getParent());
             String fn=file.getName();
-            int s=fn.toLowerCase().indexOf(YYYY_MM_DD);
+            int s=fn.toLowerCase(Locale.ENGLISH).indexOf(YYYY_MM_DD);
             if (s<0)
                 return;
             String prefix=fn.substring(0,s);

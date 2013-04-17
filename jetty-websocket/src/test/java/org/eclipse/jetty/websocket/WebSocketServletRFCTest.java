@@ -1,3 +1,21 @@
+//
+//  ========================================================================
+//  Copyright (c) 1995-2013 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
+
 package org.eclipse.jetty.websocket;
 
 import static org.hamcrest.Matchers.*;
@@ -62,6 +80,8 @@ public class WebSocketServletRFCTest
             try
             {
                 conn.sendMessage(data);
+                
+                conn.close(1000, data);
             }
             catch (IOException e)
             {
@@ -160,7 +180,7 @@ public class WebSocketServletRFCTest
             // System.out.println("RESPONSE: " + respHeader);
 
             Assert.assertThat("Response Code",respHeader,startsWith("HTTP/1.1 400 Unsupported websocket version specification"));
-            Assert.assertThat("Response Header Versions",respHeader,containsString("Sec-WebSocket-Version: 13, 8, 6, 0\r\n"));
+            Assert.assertThat("Response Header Versions",respHeader,containsString("Sec-WebSocket-Version: 13\r\n"));
         }
         finally
         {
@@ -216,6 +236,46 @@ public class WebSocketServletRFCTest
 
             Assert.assertThat("WebSocket should be closed",sender.isConnected(),is(false));
             Assert.assertThat("WebSocket close clode",sender.getCloseCode(),is(1011));
+        }
+        finally
+        {
+            sender.close();
+        }
+    }
+    
+    /**
+     * Test the requirement of responding with server terminated close code 1011 when there is an unhandled (internal
+     * server error) being produced by the extended WebSocketServlet.
+     */
+    @Test
+    public void testResponseOfHttpKeyword() throws Exception
+    {
+        WebSocketClientFactory clientFactory = new WebSocketClientFactory();
+        clientFactory.start();
+
+        WebSocketClient wsc = clientFactory.newWebSocketClient();
+        MessageSender sender = new MessageSender();
+        wsc.open(serverUri,sender);
+
+        String message = "GET";
+        
+        try
+        {
+            sender.awaitConnect();
+
+            // echo back a http keyword
+            sender.sendMessage(message);
+
+            // Give servlet 500 millisecond to process messages
+            TimeUnit.MILLISECONDS.sleep(500);
+
+            sender.awaitMessage();
+            
+            Assert.assertEquals("Message should match",message, sender.getMessage());               
+            Assert.assertThat("WebSocket should be closed",sender.isConnected(),is(false));
+            Assert.assertThat("WebSocket close clode",sender.getCloseCode(),is(1000));
+            Assert.assertEquals("WebSocket close message",message, sender.getCloseMessage());
+
         }
         finally
         {

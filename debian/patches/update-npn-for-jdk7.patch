@@ -1,0 +1,48 @@
+From 1eea7a2a89b708a159874207e53448128db7c66c Mon Sep 17 00:00:00 2001
+From: Jan Bartel
+Date: Sun, 17 Mar 2013 23:38:42 -0400
+Subject: Update to build with jdk1.7 which requires npn-boot jar v 1.1.5, and npn-api 1.1.0
+
+---
+diff --git a/jetty-spdy/pom.xml b/jetty-spdy/pom.xml
+index 23dbe65..ed898b0 100644
+--- a/jetty-spdy/pom.xml
++++ b/jetty-spdy/pom.xml
+@@ -13,7 +13,8 @@
+     <name>Jetty :: SPDY :: Parent</name>
+ 
+     <properties>
+-        <npn.version>1.1.0.v20120525</npn.version>
++        <npn.version>1.1.5.v20130313</npn.version>
++        <npn.api.version>1.1.0.v20120525</npn.api.version>
+     </properties>
+ 
+     <modules>
+diff --git a/jetty-spdy/spdy-jetty-http/pom.xml b/jetty-spdy/spdy-jetty-http/pom.xml
+index b994c17..391bac2 100644
+--- a/jetty-spdy/spdy-jetty-http/pom.xml
++++ b/jetty-spdy/spdy-jetty-http/pom.xml
+@@ -57,7 +57,7 @@
+         <dependency>
+             <groupId>org.eclipse.jetty.npn</groupId>
+             <artifactId>npn-api</artifactId>
+-            <version>1.0.0.v20120402</version>
++            <version>${npn.api.version}</version>
+             <scope>test</scope>
+         </dependency>
+         <dependency>
+diff --git a/jetty-spdy/spdy-jetty/pom.xml b/jetty-spdy/spdy-jetty/pom.xml
+index a44474f..20000cb 100644
+--- a/jetty-spdy/spdy-jetty/pom.xml
++++ b/jetty-spdy/spdy-jetty/pom.xml
+@@ -58,7 +58,7 @@
+         <dependency>
+             <groupId>org.eclipse.jetty.npn</groupId>
+             <artifactId>npn-api</artifactId>
+-            <version>${npn.version}</version>
++            <version>${npn.api.version}</version>
+             <scope>provided</scope>
+         </dependency>
+         <dependency>
+--
+cgit v0.8.3.4-115-g1759
